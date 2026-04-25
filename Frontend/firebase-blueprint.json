@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "System user with assigned tactical roles",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["NGO_ADMIN", "VOLUNTEER", "REPORTER", "GOVERNMENT", "SUPER_ADMIN"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "IncidentReport": {
+      "title": "Incident Report",
+      "description": "Disaster signal reported from the field",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "reporterId": { "type": "string" },
+        "location": { "type": "string" },
+        "needType": { "type": "array" },
+        "severity": { "type": "integer" },
+        "urgencyScore": { "type": "number" },
+        "status": { "type": "string", "enum": ["PENDING", "ACTIVE", "DISPATCHED", "RESOLVED"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Mission": {
+      "title": "Mission",
+      "description": "Authorized relief deployment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "reportId": { "type": "string" },
+        "adminId": { "type": "string" },
+        "volunteerId": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "DISPATCHED", "IN_PROGRESS", "COMPLETED"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and permissions"
+    },
+    "/reports/{reportId}": {
+      "schema": "IncidentReport",
+      "description": "Critical field incident signals"
+    },
+    "/missions/{missionId}": {
+      "schema": "Mission",
+      "description": "Operational relief deployments"
+    }
+  }
+}
