@@ -1,0 +1,34 @@
+# Seva AI — Global Git Ignore
+
+# System Files
+.DS_Store
+Thumbs.db
+*.swp
+
+# Environment Secrets (Crucial)
+.env
+.env.local
+**/.env
+**/.env.local
+**/firebase-applet-config.json
+
+# Node.js
+**/node_modules/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# Build artifacts
+**/dist/
+**/build/
+**/.firebase/
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Service Accounts
+**/*service-account.json
+**/credentials.json
