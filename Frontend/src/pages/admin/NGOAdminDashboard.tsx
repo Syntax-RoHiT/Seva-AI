@@ -79,7 +79,8 @@ export default function NGOAdminDashboard() {
   };
 
   const handleSwarmCycle = async () => {
-    const url = import.meta.env.VITE_SEVA_ENGINE_URL || 'http://localhost:8080';
+    // If VITE_SEVA_ENGINE_URL is missing from the GitHub Secrets, fallback to the production Cloud Run URL
+    const url = import.meta.env.VITE_SEVA_ENGINE_URL || 'https://seva-backend-282246312713.asia-south1.run.app';
     try {
       const res = await fetch(`${url}/swarm-cycle`, { method: 'POST' });
       const data = await res.json();
