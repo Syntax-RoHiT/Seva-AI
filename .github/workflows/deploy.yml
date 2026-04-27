@@ -35,7 +35,11 @@ jobs:
 
       # --- BACKEND DEPLOYMENT ---
       - name: Create Backend .env
-        run: echo "${{ secrets.BACKEND_ENV }}" > ./Backend/.env
+        run: |
+          cat <<EOF > ./Backend/.env
+          ${{ secrets.BACKEND_ENV }}
+          EOF
+
 
       - name: Build and Push Backend Image
         run: |
@@ -53,7 +57,11 @@ jobs:
 
       # --- FRONTEND DEPLOYMENT ---
       - name: Create Frontend .env
-        run: echo "${{ secrets.FRONTEND_ENV }}" > ./Frontend/.env
+        run: |
+          cat <<EOF > ./Frontend/.env
+          ${{ secrets.FRONTEND_ENV }}
+          EOF
+
 
       - name: Build and Push Frontend Image
         run: |
