@@ -1,35 +1,95 @@
-# Seva AI: Smart Resource Allocation for Social Impact
-**Google Solution Challenge 2026 - Build with AI Submission**
+# SEVA AI: Data-Driven Disaster Response and Resource Coordination
 
-Seva AI is a high-tech tactical coordination platform designed to bridge the gap between community needs and volunteer resources during social crises and natural disasters. By utilizing advanced AI (Gemini/Gemma) and sophisticated resource allocation algorithms, Seva AI ensures that aid reaches the right place at the right time.
+## Project Overview
+SEVA AI is an advanced emergency response and resource allocation platform developed for the Google Solution Challenge 2026. The system addresses the critical gap in disaster management where localized community needs are often scattered across disparate formats (paper surveys, voice notes, field reports) and lack a unified, real-time visualization layer for effective NGO and government response.
 
-## 🚀 The Mission
-Local social groups and NGOs often struggle with scattered, unstructured data (handwritten forms, voice notes, fragmented reports). Seva AI normalizes this data into a living **Urgency Heatmap**, allowing admins to visualize critical needs and deploy resources with mathematical precision.
+## Problem Statement
+In disaster-prone regions and marginalized communities, social groups and NGOs collect vast amounts of data regarding community needs. However, this data is frequently siloed in paper-based reports or unstructured digital formats. This lack of centralized, real-time intelligence leads to:
+1. Delayed response times to life-threatening emergencies.
+2. Sub-optimal volunteer distribution (greedy vs. global optimization).
+3. Inability to predict crisis escalation before it occurs.
+4. Dependency on internet connectivity in areas where infrastructure is compromised.
 
-## 🧠 AI & Advanced Features
-- **Multimodal Gemini 1.5 Pro:** Parses handwritten surveys (OCR) and multi-lingual voice notes (Hindi/Regional) into structured data.
-- **Urgency Decay Engine:** A dynamic algorithm that calculates priority scores based on severity, time elapsed, population density, and weather risks.
-- **Swarm Assembler (Hungarian Algorithm):** An optimal matching engine that pairs volunteers with tasks based on proximity, skill match, and global efficiency.
-- **Gemma 2 (Tactical Edge):** On-device risk assessment for volunteers in low-connectivity zones.
-- **Predictive Analytics:** Uses BigQuery ML to forecast "Future Red Zones" based on historical patterns.
+## Solution: The SEVA Ecosystem
+SEVA AI provides a four-tier tactical infrastructure that transforms unstructured field data into globally optimal rescue and relief operations.
 
-## 🛠 Tech Stack
-- **Frontend:** React, Vite, Material UI (Premium Tactical Theme), Framer Motion.
-- **Backend:** Firebase (Firestore, Auth, Functions, Storage).
-- **Maps:** Google Maps Platform (Heatmaps, Directions, Distance Matrix).
-- **AI:** Google GenAI SDK (Gemini), Gemma 2.
-- **Data:** BigQuery, Looker Studio.
+1. **Edge AI Data Ingestion**: Field workers can capture reports via OCR or voice even in offline environments using on-device Gemma 4 models (WebGPU/Chrome AI).
+2. **SEVA Reasoning Engine**: A high-performance Cloud Run environment utilizing Gemma 4 31B on Vertex AI for agentic reasoning and multi-factor risk assessment.
+3. **Tactical Command Center**: A real-time administrative dashboard featuring a Google Maps-based live urgency heatmap with BigQuery ML predictive forecasting.
+4. **Optimized Dispatch**: A volunteer deployment PWA that utilizes the Hungarian Algorithm to ensure globally optimal resource matching based on skills, distance, and urgency.
 
-## 📈 Impact (SDGs)
-- **SDG 1 (No Poverty):** Efficient resource distribution.
-- **SDG 3 (Good Health & Well-being):** Rapid medical aid dispatch.
-- **SDG 11 (Sustainable Cities & Communities):** Resilient infrastructure for community response.
+## System Architecture
 
-## 🛠 Getting Started
-1. Clone the repository.
-2. Install dependencies in both `Frontend` and `Backend`.
-3. Set up your `.env` with Google Cloud & Firebase credentials.
-4. Run `npm run dev` in the Frontend folder.
+```mermaid
+graph TD
+    subgraph "Data Ingestion Layer (Field Worker)"
+        A[Paper Survey / Voice Note] --> B[Edge AI: Gemma 4 Nano/2B]
+        B --> C[Offline Structured Data Store]
+        C -->|Sync| D[Firebase Firestore]
+    end
 
----
-**Seva AI — Technology for Humanity.**
+    subgraph "SEVA Reasoning Engine (Cloud Run)"
+        D --> E[Gemini 1.5 Flash Parser]
+        E --> F[Gemma 4 31B Reasoning Agent]
+        F --> G[Agentic Tool Calls: Weather/Census]
+        G --> H[Urgency Decay Engine]
+        H --> D
+    end
+
+    subgraph "Strategic Oversight (NGO/Gov Admin)"
+        D --> I[Google Maps JS API Heatmap]
+        J[BigQuery ML ARIMA_PLUS] -->|Predictions| I
+        K[Looker Studio] -->|Social Impact| L[Admin Dashboard]
+    end
+
+    subgraph "Deployment Layer (Volunteer)"
+        D --> M[Hungarian Algorithm Matching]
+        M --> N[FCM Critical Alert]
+        N --> O[Volunteer PWA]
+        O -->|GPS Tracking| I
+    end
+```
+
+## Core Algorithms
+
+### 1. Urgency Decay Formula (UDF)
+The platform uses a dynamic scoring model that ensures unattended reports escalate in priority automatically.
+**Formula:** `U = S * (1 + T / 12) * Z + R + W`
+- `S`: Base Severity (1-5) extracted by AI.
+- `T`: Time elapsed in hours since submission.
+- `Z`: Zone Density (1.0 Rural, 1.5 Urban, 2.0 High-Density).
+- `R`: Repeat Report Bonus (incremented for duplicate reports).
+- `W`: Weather Risk factor (Real-time data from Open-Meteo).
+
+### 2. Hungarian Algorithm (Kuhn-Munkres)
+Unlike greedy matching which assigns the first available volunteer, SEVA AI implements the Hungarian Algorithm ($O(N^3)$) to minimize the global cost of the entire mission set. Cost is calculated as a weighted matrix of:
+- **70% Proximity**: Real driving distance via Google Maps Distance Matrix API.
+- **30% Skill Match**: Similarity between volunteer skills and report requirements.
+
+### 3. BigQuery ML Crisis Forecasting
+The system utilizes the `ARIMA_PLUS` time-series model to predict "Future Red Zones." By analyzing historical urgency trends across geohashes, the map displays dashed-border regions where a crisis is predicted to escalate within the next 24-72 hours.
+
+## Technology Stack
+
+### Google Cloud Platform
+- **Vertex AI**: Hosting Gemma 4 31B for reasoning and Gemini 1.5 Flash for multimodal parsing.
+- **Cloud Run**: Scaling the SEVA Engine and matching logic.
+- **BigQuery**: Real-time analytics and ML forecasting.
+- **Firestore**: Real-time NoSQL database for system synchronization.
+- **Cloud Functions**: Event-driven triggers for data enrichment.
+- **Looker Studio**: Embedded social impact visualizations.
+
+### Maps and Location
+- **Google Maps JS API**: Visualization layer for tactical heatmaps.
+- **Distance Matrix API**: Real-world travel time calculations for dispatch.
+- **Geolocation API**: Continuous field worker and volunteer tracking.
+
+### Frontend and PWA
+- **React 19 + TypeScript**: Core application framework.
+- **WebGPU**: Accelerated local AI inference.
+- **Firebase Cloud Messaging**: High-priority push notifications.
+
+## Repository Structure
+- `/Frontend`: React-based dashboards and PWA interfaces.
+- `/Backend`: Firebase Cloud Functions and Cloud Run microservices.
+- `/docs`: Detailed architectural specifications and logic diagrams.
