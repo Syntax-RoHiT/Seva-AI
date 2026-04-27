@@ -75,9 +75,15 @@ export default function Shell({ children, role }: ShellProps) {
     setIsTyping(true);
 
     try {
-      const geminiHistory = chatHistory.map(m => ({
-        role: m.role,
-        parts: [{ text: m.content }]
+      // Gemini requires first message to be from 'user'. The initial greeting is from 'model'.
+      // We will slice off the first message if it's the default greeting.
+      const apiHistory = chatHistory.length > 0 && chatHistory[0].role === 'model' 
+        ? chatHistory.slice(1) 
+        : chatHistory;
+
+      const geminiHistory = apiHistory.map(m => ({
+        role: m.role === 'model' ? 'model' : 'user',
+        parts: [{ text: m.content || ' ' }]
       }));
 
       const response = await chatWithAssistant(userMessage, geminiHistory);
@@ -92,7 +98,6 @@ export default function Shell({ children, role }: ShellProps) {
 
   const menuItems = React.useMemo(() => {
     const common = [
-      { text: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
       { text: 'Public Portal', icon: <Globe size={20} />, path: '/' },
       { text: 'Settings', icon: <Settings size={20} />, path: '/settings' },
     ];
@@ -115,20 +120,8 @@ export default function Shell({ children, role }: ShellProps) {
           { text: 'Inventory', icon: <Server size={20} />, path: '/inventory' },
           ...common,
         ];
-      case 'GOVERNMENT':
-        return [
-          { text: 'National Overview', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-          { text: 'Global Heatmap', icon: <Globe size={20} />, path: '/heatmap' },
-          { text: 'Policy Center', icon: <Settings size={20} />, path: '/policy' },
-          { text: 'Review Reports', icon: <TrendingUp size={20} />, path: '/reports' },
-          ...common,
-        ];
-      case 'REPORTER':
-        return [
-          { text: 'Report Center', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-          { text: 'My Reports', icon: <AlertTriangle size={20} />, path: '/my-reports' },
-          ...common,
-        ];
+
+
       case 'SUPER_ADMIN':
         return [
           { text: 'Main Control', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
@@ -137,7 +130,10 @@ export default function Shell({ children, role }: ShellProps) {
           ...common,
         ];
       default:
-        return common;
+        return [
+          { text: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
+          ...common
+        ];
     }
   }, [role]);
 
@@ -239,7 +235,7 @@ export default function Shell({ children, role }: ShellProps) {
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-4 mr-4">
               <Badge variant="dot" color="error">
-                <Bell size={20} className="text-gray-500 hover:text-blue-600 cursor-pointer transition-colors" />
+                <Bell size={20} className="text-gray-500 hover:text-blue-600 cursor-pointer transition-colors" onClick={() => alert('No new notifications')} />
               </Badge>
               <MessageSquare 
                 size={20} 

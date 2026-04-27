@@ -4,15 +4,16 @@ import {
   Camera, Mic, MapPin, Utensils, HeartPulse, Tent,
   Droplets, Search, GraduationCap, CheckCircle2,
   ChevronLeft, Send, Zap, Info, ShieldAlert, Target,
-  Signal, Home, Cpu, Wifi, WifiOff, Globe
+  Signal, Home, Cpu, Wifi, WifiOff, Globe, StopCircle, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../../lib/firebase';
 import { calculateUrgencyScore } from '../../services/scoringService';
-import { processReportEdge, getAICapabilities, extractTextFromImage, type EdgeAIResult } from '../../services/edgeAIService';
-import { parseImageReport } from '../../services/geminiService';
+import { getAICapabilities } from '../../services/edgeAIService';
+import { parseMultipleImages, parseVoiceNote } from '../../services/geminiService';
 
 const needTypes = [
   { id: 'food',      label: 'Food Supply',  icon: <Utensils /> },
@@ -50,6 +51,9 @@ export default function ReporterPage() {
   const navigate = useNavigate();
 
   const [submitted, setSubmitted] = React.useState(false);
+  const [submittedReportId, setSubmittedReportId] = React.useState('');
+  const [submittedUrgency, setSubmittedUrgency] = React.useState(0);
+  
   const [selectedType, setSelectedType] = React.useState('medical');
   const [severity, setSeverity] = React.useState(3);
   const [details, setDetails] = React.useState('');
@@ -61,9 +65,16 @@ export default function ReporterPage() {
   const [lastInferenceMs, setLastInferenceMs] = React.useState<number | undefined>();
   const [isOffline, setIsOffline] = React.useState(!navigator.onLine);
 
-  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+  // Images state
+  const [images, setImages] = React.useState<{ base64: string; mimeType: string }[]>([]);
   const [imageLoading, setImageLoading] = React.useState(false);
-  const [imageParsed, setImageParsed] = React.useState(false);
+
+  // Audio recording state
+  const [isRecording, setIsRecording] = React.useState(false);
+  const [audioLoading, setAudioLoading] = React.useState(false);
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const audioChunksRef = React.useRef<Blob[]>([]);
+
   const [location, setLocation] = React.useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -87,45 +98,109 @@ export default function ReporterPage() {
   }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []).slice(0, 5 - images.length);
+    if (!files.length) return;
     setImageLoading(true);
+    setAIStatusMsg('Parsing images via AI Vision...');
+    
+    const newImages: { base64: string; mimeType: string }[] = [];
+    
+    for (const file of files) {
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target?.result as string);
+        reader.readAsDataURL(file);
+      });
+      newImages.push({ base64, mimeType: file.type });
+    }
 
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-      const base64 = ev.target?.result as string;
-      setImagePreview(base64);
-      try {
-        const ocrText = await extractTextFromImage(base64);
-        let parsed: EdgeAIResult;
-        if (ocrText !== '[IMAGE_OCR_REQUIRED]') {
-          parsed = await processReportEdge(ocrText, setAIStatusMsg);
-        } else {
-          const serverParsed = await parseImageReport(base64, file.type);
-          parsed = {
-            needType: serverParsed.needType,
-            severity: serverParsed.severity,
-            affectedCount: serverParsed.affectedCount,
-            summary: serverParsed.summary,
-            isLifeThreatening: serverParsed.isLifeThreatening ?? false,
-            processingMode: 'SERVER_FALLBACK',
-            processingMs: 0,
-          };
-        }
-        setDetails(parsed.summary);
-        if (parsed.needType[0]) setSelectedType(parsed.needType[0].toLowerCase());
-        setSeverity(Math.min(5, Math.max(1, parsed.severity)));
-        if (parsed.affectedCount) setAffectedCount(String(parsed.affectedCount));
-        setAIMode(parsed.processingMode);
-        setLastInferenceMs(parsed.processingMs);
-        setImageParsed(true);
-      } catch (err) {
-        console.error('Image OCR failed', err);
-      } finally {
-        setImageLoading(false);
-      }
-    };
-    reader.readAsDataURL(file);
+    const updatedImages = [...images, ...newImages];
+    setImages(updatedImages);
+
+    try {
+      const t0 = performance.now();
+      const parsed = await parseMultipleImages(updatedImages);
+      
+      setDetails(prev => prev ? prev + '\n' + parsed.summary : parsed.summary);
+      if (parsed.needType && parsed.needType[0]) setSelectedType(parsed.needType[0].toLowerCase());
+      if (parsed.severity) setSeverity(Math.min(5, Math.max(1, parsed.severity)));
+      if (parsed.affectedCount) setAffectedCount(String(parsed.affectedCount));
+      
+      setAIMode('SERVER_FALLBACK'); 
+      setLastInferenceMs(Math.round(performance.now() - t0));
+      setAIStatusMsg('Images parsed successfully');
+    } catch (err) {
+      console.error('Image AI parsing failed', err);
+      setAIStatusMsg('Image parsing failed');
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await processVoiceNote(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setAIStatusMsg('Recording audio...');
+    } catch (err) {
+      console.error('Error starting recording:', err);
+      alert('Microphone access denied or unavailable.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      setAIStatusMsg('Processing voice note...');
+    }
+  };
+
+  const processVoiceNote = async (blob: Blob) => {
+    setAudioLoading(true);
+    const base64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => resolve(ev.target?.result as string);
+      reader.readAsDataURL(blob);
+    });
+
+    try {
+      const t0 = performance.now();
+      const parsed = await parseVoiceNote(base64, blob.type);
+      
+      setDetails(prev => prev ? prev + '\n[Voice]: ' + parsed.summary : '[Voice]: ' + parsed.summary);
+      if (parsed.needType && parsed.needType[0]) setSelectedType(parsed.needType[0].toLowerCase());
+      if (parsed.severity) setSeverity(Math.min(5, Math.max(1, parsed.severity)));
+      if (parsed.affectedCount) setAffectedCount(String(parsed.affectedCount));
+
+      setAIMode('SERVER_FALLBACK');
+      setLastInferenceMs(Math.round(performance.now() - t0));
+      setAIStatusMsg('Voice note transcribed successfully');
+    } catch (err) {
+      console.error('Voice note processing failed', err);
+      setAIStatusMsg('Voice transcription failed');
+    } finally {
+      setAudioLoading(false);
+    }
   };
 
   const handleLocationLock = () => {
@@ -142,23 +217,20 @@ export default function ReporterPage() {
   };
 
   const handleSubmit = async () => {
-    if (!details.trim() && !selectedType) return;
+    if (!details.trim() && !selectedType && images.length === 0) return;
     setLoading(true);
+    setAIStatusMsg('Submitting report...');
+    
     try {
-      setAIStatusMsg('Processing report with Edge AI...');
-      const parsed = await processReportEdge(details || selectedType, setAIStatusMsg);
-      setAIMode(parsed.processingMode);
-      setLastInferenceMs(parsed.processingMs);
-
       const urgencyScore = calculateUrgencyScore({
-        severity: parsed.severity || severity,
+        severity: severity,
         unresolvedHours: 0,
         zoneDensity: 1.5,
         repeatBonus: 0,
         weatherBonus: 0.5,
       });
 
-      await addDoc(collection(db, 'reports'), {
+      const docRef = await addDoc(collection(db, 'reports'), {
         text: details,
         type: selectedType,
         location: location || { lat: 26.9124, lng: 75.7873 },
@@ -167,28 +239,54 @@ export default function ReporterPage() {
           : 'Unknown Location',
         reporterId:   user?.uid || 'anonymous',
         reporterName: user?.displayName || 'Guest Reporter',
-        needType:     parsed.needType,
-        severity:     parsed.severity || severity,
+        needType:     [selectedType.toUpperCase()],
+        severity:     severity,
         urgencyScore,
         status:       'PENDING',
-        isLifeThreatening: parsed.isLifeThreatening,
-        summary:      parsed.summary,
-        edgeAIMode:   parsed.processingMode,
-        edgeInferenceMs: parsed.processingMs,
+        isLifeThreatening: severity >= 4,
+        summary:      details.substring(0, 100),
+        edgeAIMode:   aiMode,
+        edgeInferenceMs: lastInferenceMs || 0,
         createdAt:    serverTimestamp(),
         updatedAt:    serverTimestamp(),
         meta: {
-          affectedCount: parsed.affectedCount || parseInt(affectedCount) || 0,
-          imageAttached: !!imagePreview,
+          affectedCount: parseInt(affectedCount) || 0,
+          imageCount: images.length,
           locationLocked: !!location,
         },
       });
+
+      const imageUrls: string[] = [];
+      if (images.length > 0) {
+        setAIStatusMsg('Uploading images to secure storage...');
+        for (let i = 0; i < images.length; i++) {
+          const img = images[i];
+          const imageRef = ref(storage, `reports/${docRef.id}/image_${i}.jpg`);
+          await uploadString(imageRef, img.base64, 'data_url');
+          const url = await getDownloadURL(imageRef);
+          imageUrls.push(url);
+        }
+        await updateDoc(doc(db, 'reports', docRef.id), { imageUrls });
+      }
+
+      setSubmittedReportId(docRef.id);
+      setSubmittedUrgency(urgencyScore);
       setSubmitted(true);
     } catch (err) {
       console.error('Signal broadcast failed', err);
+      setAIStatusMsg('Submission failed. Check network.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setSubmitted(false);
+    setImages([]);
+    setDetails('');
+    setAffectedCount('');
+    setSeverity(3);
+    setAIStatusMsg('Ready for next report.');
   };
 
   if (submitted) {
@@ -202,16 +300,29 @@ export default function ReporterPage() {
           <h2 className="text-2xl font-bold uppercase tracking-wide mb-3 text-gray-900">
             Report Submitted
           </h2>
-          <div className="mb-6">
-            <AIModeChip mode={aiMode} inferenceMs={lastInferenceMs} />
+          
+          <div className="bg-gray-50 border border-gray-200 p-4 mb-6 text-left">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Report ID</span>
+              <span className="text-xs font-mono font-bold text-gray-900">{submittedReportId.substring(0, 8)}</span>
+            </div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Urgency Score</span>
+              <span className="text-xs font-bold text-red-600">{submittedUrgency.toFixed(1)} / 10.0</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">AI Processing</span>
+              <AIModeChip mode={aiMode} inferenceMs={lastInferenceMs} />
+            </div>
           </div>
-          <p className="text-sm text-gray-500 mb-10 leading-relaxed font-medium">
-            Processed {aiMode === 'EDGE_CHROME_AI' || aiMode === 'EDGE_WEBGPU' ? 'on-device — no data left this phone' : 'via cloud'}. Urgency score computed. Volunteers will be notified shortly.
+          
+          <p className="text-sm text-gray-500 mb-8 leading-relaxed font-medium">
+            Your emergency report has been routed. Nearby volunteers and response units will be notified based on urgency.
           </p>
           <div className="space-y-3">
             <button
-              onClick={() => { setSubmitted(false); setImagePreview(null); setImageParsed(false); setDetails(''); }}
-              className="w-full py-4 bg-blue-600 text-white font-semibold uppercase text-xs tracking-wider hover:bg-blue-700 transition-colors"
+              onClick={resetForm}
+              className="w-full py-4 bg-blue-600 text-white font-semibold uppercase text-xs tracking-wider hover:bg-blue-700 transition-colors shadow-sm"
             >
               Submit Another Report
             </button>
@@ -259,7 +370,6 @@ export default function ReporterPage() {
       </div>
 
       <div className="container max-w-2xl mx-auto px-6 mt-8 mb-20 space-y-10">
-
         {/* AI Status Bar */}
         <div className="bg-white p-4 border border-gray-200 flex items-center gap-4 shadow-sm">
           <div className="p-2 bg-blue-50 text-blue-600 border border-blue-100">
@@ -267,7 +377,7 @@ export default function ReporterPage() {
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-xs font-semibold uppercase tracking-wider text-blue-600 mb-1">
-              AI Processing Mode
+              AI Processing Status
             </div>
             <div className="text-sm text-gray-500 truncate">{aiStatusMsg}</div>
           </div>
@@ -298,7 +408,7 @@ export default function ReporterPage() {
                   <div className={`mb-3 mx-auto w-10 h-10 flex items-center justify-center transition-colors ${
                     selectedType === type.id ? 'text-blue-600' : 'text-gray-400'
                   }`}>
-                    {React.isValidElement(type.icon) && React.cloneElement(type.icon as React.ReactElement<{ size: number }>, { size: 24 })}
+                    {React.isValidElement(type.icon) && React.cloneElement(type.icon as React.ReactElement<any>, { size: 24 })}
                   </div>
                   <div className={`text-xs font-semibold uppercase tracking-wider ${
                     selectedType === type.id ? 'text-blue-700' : 'text-gray-500'
@@ -317,49 +427,64 @@ export default function ReporterPage() {
             <div className="w-8 h-8 bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600">
               <Camera size={16} />
             </div>
-            <h3 className="text-lg font-bold uppercase tracking-wide">Attach Evidence (Optional)</h3>
+            <h3 className="text-lg font-bold uppercase tracking-wide">Attach Evidence</h3>
           </div>
 
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
+            multiple
             capture="environment"
             className="hidden"
             onChange={handleImageUpload}
           />
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-4 mb-4">
             <button
               onClick={() => fileInputRef.current?.click()}
-              disabled={imageLoading}
+              disabled={imageLoading || images.length >= 5}
               className="aspect-square bg-white border border-gray-200 hover:border-blue-300 transition-colors flex flex-col items-center justify-center gap-2 relative overflow-hidden"
             >
               {imageLoading ? (
                 <>
                   <Cpu size={24} className="text-blue-600 animate-pulse" />
-                  <span className="text-xs font-semibold uppercase tracking-wider text-blue-600">Parsing...</span>
-                </>
-              ) : imageParsed ? (
-                <>
-                  <div className="absolute inset-0">
-                    <img src={imagePreview!} className="w-full h-full object-cover opacity-30" />
-                  </div>
-                  <CheckCircle2 size={24} className="relative text-green-600" />
-                  <span className="relative text-xs font-semibold uppercase tracking-wider text-green-700">OCR Done</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-600">Parsing AI...</span>
                 </>
               ) : (
                 <>
                   <Camera size={24} className="text-gray-400" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Photo / OCR</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    Photos ({images.length}/5)
+                  </span>
                 </>
               )}
             </button>
 
-            <button className="aspect-square bg-white border border-gray-200 hover:border-blue-300 transition-colors flex flex-col items-center justify-center gap-2">
-              <Mic size={24} className="text-gray-400" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Voice Note</span>
-            </button>
+            {isRecording ? (
+              <button onClick={stopRecording} className="aspect-square border border-red-300 bg-red-50 flex flex-col items-center justify-center gap-2 animate-pulse">
+                <StopCircle size={24} className="text-red-600" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-red-700">Stop</span>
+              </button>
+            ) : (
+              <button 
+                onClick={startRecording} 
+                disabled={audioLoading}
+                className="aspect-square bg-white border border-gray-200 hover:border-blue-300 transition-colors flex flex-col items-center justify-center gap-2"
+              >
+                {audioLoading ? (
+                  <>
+                    <Cpu size={24} className="text-blue-600 animate-pulse" />
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-600">Transcribing</span>
+                  </>
+                ) : (
+                  <>
+                    <Mic size={24} className="text-gray-400" />
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Voice Note</span>
+                  </>
+                )}
+              </button>
+            )}
 
             <button
               onClick={handleLocationLock}
@@ -377,12 +502,16 @@ export default function ReporterPage() {
             </button>
           </div>
 
-          {imageParsed && (
-            <div className="mt-4 flex items-center gap-3 px-4 py-3 border border-blue-200 bg-blue-50">
-              <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-blue-700">
-                Form auto-filled via Edge AI OCR
-              </span>
+          {images.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {images.map((img, idx) => (
+                <div key={idx} className="relative w-20 h-20 shrink-0 border border-gray-200 shadow-sm">
+                  <img src={img.base64} className="w-full h-full object-cover" />
+                  <button onClick={() => removeImage(idx)} className="absolute top-1 right-1 bg-red-600 text-white p-1 hover:bg-red-700">
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </section>
@@ -433,11 +562,11 @@ export default function ReporterPage() {
           <div className="space-y-4">
             <div className="relative group">
               <div className="absolute top-3 left-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 group-focus-within:text-blue-600 transition-colors">
-                Incident Description
+                Incident Description & AI Transcript
               </div>
               <textarea
                 rows={4}
-                placeholder="Describe what happened..."
+                placeholder="Describe what happened or speak to record..."
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 className="w-full bg-white border border-gray-200 p-4 pt-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all resize-none font-medium"

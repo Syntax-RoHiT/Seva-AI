@@ -20,6 +20,38 @@ export interface ParsedReport {
   summary: string;
 }
 
+const responseSchema = {
+  type: Type.OBJECT,
+  properties: {
+    needType: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+      description: "Types of aid needed (e.g., Medical, Food, Rescue, Water, Shelter, Power)"
+    },
+    severity: {
+      type: Type.INTEGER,
+      description: "Severity score from 1 to 5"
+    },
+    affectedCount: {
+      type: Type.INTEGER,
+      description: "Estimated number of people affected"
+    },
+    locationDescription: {
+      type: Type.STRING,
+      description: "Specific location details mentioned"
+    },
+    isLifeThreatening: {
+      type: Type.BOOLEAN,
+      description: "Whether the situation is immediately life-threatening"
+    },
+    summary: {
+      type: Type.STRING,
+      description: "A 1-sentence summary of the incident"
+    }
+  },
+  required: ["needType", "severity", "isLifeThreatening", "summary"]
+};
+
 /**
  * Parses a text-based report into structured data.
  */
@@ -30,43 +62,13 @@ export const parseIncidentReport = async (text: string): Promise<ParsedReport> =
     contents: `Analyze this disaster relief report and extract structured data: "${text}"`,
     config: {
       responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          needType: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING },
-            description: "Types of aid needed (e.g., Medical, Food, Rescue, Water, Shelter, Power)"
-          },
-          severity: {
-            type: Type.INTEGER,
-            description: "Severity score from 1 to 5"
-          },
-          affectedCount: {
-            type: Type.INTEGER,
-            description: "Estimated number of people affected"
-          },
-          locationDescription: {
-            type: Type.STRING,
-            description: "Specific location details mentioned"
-          },
-          isLifeThreatening: {
-            type: Type.BOOLEAN,
-            description: "Whether the situation is immediately life-threatening"
-          },
-          summary: {
-            type: Type.STRING,
-            description: "A 1-sentence summary of the incident"
-          }
-        },
-        required: ["needType", "severity", "isLifeThreatening", "summary"]
-      }
+      responseSchema: responseSchema
     }
   });
 
   try {
-    const text = response.text || "";
-    return JSON.parse(text) as ParsedReport;
+    const responseText = response.text || "";
+    return JSON.parse(responseText) as ParsedReport;
   } catch (error) {
     console.error("Failed to parse Gemini response", error);
     return {
@@ -102,31 +104,7 @@ export const parseImageReport = async (base64Image: string, mimeType: string = "
     ],
     config: {
       responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          needType: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING }
-          },
-          severity: {
-            type: Type.INTEGER
-          },
-          affectedCount: {
-            type: Type.INTEGER
-          },
-          locationDescription: {
-            type: Type.STRING
-          },
-          isLifeThreatening: {
-            type: Type.BOOLEAN
-          },
-          summary: {
-            type: Type.STRING
-          }
-        },
-        required: ["needType", "severity", "isLifeThreatening", "summary"]
-      }
+      responseSchema: responseSchema
     }
   });
 
@@ -146,6 +124,94 @@ export const parseImageReport = async (base64Image: string, mimeType: string = "
   }
 };
 
+/**
+ * Parses multiple images and aggregates the results into one structured data payload.
+ */
+export const parseMultipleImages = async (images: { base64: string; mimeType: string }[]): Promise<ParsedReport> => {
+  const ai = getAI();
+  
+  const imageParts = images.map(img => ({
+    inlineData: {
+      data: img.base64.split(",")[1] || img.base64,
+      mimeType: img.mimeType
+    }
+  }));
+
+  const response = await ai.models.generateContent({
+    model: "gemini-1.5-flash",
+    contents: [
+      {
+        parts: [
+          ...imageParts,
+          { text: "Analyze these images together. They represent a single disaster or field report. Extract the overall structured data representing the aggregate situation shown across all images." }
+        ]
+      }
+    ],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: responseSchema
+    }
+  });
+
+  try {
+    const text = response.text || "";
+    return JSON.parse(text) as ParsedReport;
+  } catch (error) {
+    console.error("Failed to parse multiple images", error);
+    return {
+      needType: ["General"],
+      severity: 3,
+      affectedCount: 0,
+      locationDescription: "Extracted from multiple images",
+      isLifeThreatening: false,
+      summary: "Multiple image reports processed."
+    };
+  }
+};
+
+/**
+ * Transcribes a voice note and extracts structured data.
+ */
+export const parseVoiceNote = async (audioBase64: string, mimeType: string): Promise<ParsedReport> => {
+  const ai = getAI();
+  const response = await ai.models.generateContent({
+    model: "gemini-1.5-flash",
+    contents: [
+      {
+        parts: [
+          {
+            inlineData: {
+              data: audioBase64.split(",")[1] || audioBase64,
+              mimeType: mimeType
+            }
+          },
+          { text: "Transcribe this audio field report and extract the structured data representing the situation." }
+        ]
+      }
+    ],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: responseSchema
+    }
+  });
+
+  try {
+    const text = response.text || "";
+    return JSON.parse(text) as ParsedReport;
+  } catch (error) {
+    console.error("Failed to parse voice note", error);
+    return {
+      needType: ["General"],
+      severity: 3,
+      affectedCount: 0,
+      locationDescription: "Extracted from voice note",
+      isLifeThreatening: false,
+      summary: "Voice report processed."
+    };
+  }
+};
+
+
 export const chatWithAssistant = async (message: string, history: any[] = []) => {
   const ai = getAI();
   const chat = ai.chats.create({
@@ -158,7 +224,7 @@ export const chatWithAssistant = async (message: string, history: any[] = []) =>
     }
   });
 
-  const response = await chat.sendMessage(message);
+  const response = await chat.sendMessage(message as any);
   return response.text;
 };
 
@@ -176,4 +242,3 @@ export const summarizeSituation = async (reports: any[]) => {
 
   return response.text;
 };
-

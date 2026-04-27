@@ -1,4 +1,4 @@
-export type UserRole = 'REPORTER' | 'NGO_ADMIN' | 'VOLUNTEER' | 'GOVERNMENT' | 'SUPER_ADMIN';
+export type UserRole = 'NGO_ADMIN' | 'VOLUNTEER' | 'SUPER_ADMIN';
 
 export interface User {
   id: string;
@@ -7,6 +7,7 @@ export interface User {
   role: UserRole;
   avatar?: string;
   organization?: string;
+  approved: boolean;
 }
 
 export interface EmergencyReport {
@@ -16,7 +17,7 @@ export interface EmergencyReport {
   location: { lat: number; lng: number; address: string };
   peopleCount: number;
   description: string;
-  status: 'RECEIVED' | 'PROCESSING' | 'ASSIGNED' | 'ON_ROUTE' | 'RESOLVED';
+  status: 'PENDING' | 'PROCESSING' | 'DISPATCHED' | 'RESOLVED';
   createdAt: string;
-  priorityScore: number;
+  urgencyScore: number;
 }

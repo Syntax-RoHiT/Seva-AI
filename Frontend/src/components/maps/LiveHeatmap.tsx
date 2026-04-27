@@ -5,7 +5,7 @@ import { db } from '../../lib/firebase';
 import { Globe, Loader2, Radio, TrendingUp } from 'lucide-react';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-const LIBRARIES: ('visualization' | 'geometry')[] = ['visualization'];
+const LIBRARIES: ('visualization' | 'geometry' | 'marker')[] = ['visualization', 'marker'];
 
 const LIGHT_MAP_STYLE = [
   { elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
@@ -31,20 +31,7 @@ const LIGHT_MAP_STYLE = [
 const center = { lat: 26.9124, lng: 75.7873 };
 const mapContainerStyle = { width: '100%', height: '100%' };
 
-const SEED_ZONES = [
-  { id: 'S1', lat: 26.9200, lng: 75.7900, urgencyScore: 9.8 },
-  { id: 'S2', lat: 26.9000, lng: 75.7700, urgencyScore: 8.5 },
-  { id: 'S3', lat: 26.9150, lng: 75.8000, urgencyScore: 4.2 },
-  { id: 'S4', lat: 26.9300, lng: 75.7800, urgencyScore: 7.2 },
-  { id: 'S5', lat: 26.9050, lng: 75.8100, urgencyScore: 6.1 },
-  { id: 'S6', lat: 26.9250, lng: 75.7650, urgencyScore: 2.5 },
-];
 
-const FORECAST_ZONES = [
-  { id: 'F1', lat: 26.9350, lng: 75.7950, predictedScore: 7.8, confidence: 'HIGH',   radiusM: 600, label: 'PREDICTED: HIGH in 24h' },
-  { id: 'F2', lat: 26.8950, lng: 75.8150, predictedScore: 6.2, confidence: 'MEDIUM', radiusM: 800, label: 'PREDICTED: MOD in 48h' },
-  { id: 'F3', lat: 26.9180, lng: 75.7600, predictedScore: 8.5, confidence: 'HIGH',   radiusM: 500, label: 'PREDICTED: CRITICAL in 12h' },
-];
 
 interface ZonePoint {
   id: string;
@@ -70,15 +57,15 @@ function getLabelForScore(score: number): string {
 }
 
 export default function LiveHeatmap() {
-  const [zones, setZones] = React.useState<ZonePoint[]>(SEED_ZONES);
+  const [zones, setZones] = React.useState<ZonePoint[]>([]);
   const [selectedZone, setSelectedZone] = React.useState<ZonePoint | null>(null);
   const [mapRef, setMapRef] = React.useState<google.maps.Map | null>(null);
   const heatmapRef = useRef<google.maps.visualization.HeatmapLayer | null>(null);
-  const markersRef = useRef<google.maps.Marker[]>([]);
+  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const forecastCirclesRef = useRef<google.maps.Circle[]>([]);
   const [isSyncing, setIsSyncing] = React.useState(true);
   const [liveCount, setLiveCount] = React.useState(0);
-  const [showForecast, setShowForecast] = React.useState(true);
+
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-heatmap-script',
@@ -100,9 +87,7 @@ export default function LiveHeatmap() {
         }));
 
       setLiveCount(live.length);
-      // Merge live data with seed data for a rich demo
-      const merged = [...live, ...SEED_ZONES].slice(0, 60);
-      setZones(merged.length > 0 ? merged : SEED_ZONES);
+      setZones(live);
       setIsSyncing(false);
     }, () => setIsSyncing(false));
     return () => unsubscribe();
@@ -117,7 +102,7 @@ export default function LiveHeatmap() {
     if (!mapRef || !isLoaded || !window.google?.maps?.visualization) return;
 
     // Clear old markers
-    markersRef.current.forEach(m => m.setMap(null));
+    markersRef.current.forEach(m => { m.map = null; });
     markersRef.current = [];
 
     // Clear old heatmap
@@ -149,21 +134,22 @@ export default function LiveHeatmap() {
       const color = getColorForScore(zone.urgencyScore);
       const scale = Math.max(8, zone.urgencyScore * 2.5);
 
-      const marker = new google.maps.Marker({
+      const pinSvg = `
+        <svg width="${scale * 2}" height="${scale * 2}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" fill="${color}" fill-opacity="0.6" stroke="#ffffff" stroke-width="2"/>
+        </svg>
+      `;
+      const parser = new DOMParser();
+      const svgElement = parser.parseFromString(pinSvg, "image/svg+xml").documentElement;
+
+      const marker = new google.maps.marker.AdvancedMarkerElement({
         position: { lat: zone.lat, lng: zone.lng },
         map: mapRef,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: color,
-          fillOpacity: 0.6,
-          strokeWeight: 2,
-          strokeColor: '#ffffff',
-          scale,
-        },
+        content: svgElement,
         title: `Score: ${zone.urgencyScore}`,
       });
 
-      marker.addListener('click', () => {
+      marker.addListener('gmp-click', () => {
         setSelectedZone(zone);
       });
 
@@ -174,47 +160,12 @@ export default function LiveHeatmap() {
     forecastCirclesRef.current.forEach(c => c.setMap(null));
     forecastCirclesRef.current = [];
 
-    if (showForecast) {
-      FORECAST_ZONES.forEach(fz => {
-        const color = fz.predictedScore >= 8 ? '#9333ea' : fz.predictedScore >= 6 ? '#7c3aed' : '#6d28d9';
-        // Outer dashed ring
-        const circle = new google.maps.Circle({
-          center: { lat: fz.lat, lng: fz.lng },
-          radius: 700,
-          map: mapRef,
-          strokeColor: color,
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: color,
-          fillOpacity: 0.1,
-          zIndex: 1,
-        });
-        // Clickable inner label marker
-        const labelMarker = new google.maps.Marker({
-          position: { lat: fz.lat, lng: fz.lng },
-          map: mapRef,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: color,
-            fillOpacity: 0.5,
-            strokeWeight: 1.5,
-            strokeColor: '#ffffff',
-            scale: 8,
-          },
-          title: fz.label,
-          zIndex: 2,
-        });
-        forecastCirclesRef.current.push(circle);
-        markersRef.current.push(labelMarker);
-      });
-    }
-
     return () => {
       if (heatmapRef.current) heatmapRef.current.setMap(null);
-      markersRef.current.forEach(m => m.setMap(null));
+      markersRef.current.forEach(m => { m.map = null; });
       forecastCirclesRef.current.forEach(c => c.setMap(null));
     };
-  }, [mapRef, zones, isLoaded, showForecast]);
+  }, [mapRef, zones, isLoaded]);
 
   const criticalCount = zones.filter(z => z.urgencyScore >= 8).length;
   const highCount = zones.filter(z => z.urgencyScore >= 6 && z.urgencyScore < 8).length;
@@ -242,18 +193,7 @@ export default function LiveHeatmap() {
             </span>
           </div>
         )}
-        {/* Forecast toggle */}
-        <button
-          onClick={() => setShowForecast(f => !f)}
-          className={`px-4 py-2 bg-white border shadow-sm flex items-center gap-2 transition-colors ${
-            showForecast ? 'border-purple-300 text-purple-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
-          }`}
-        >
-          <TrendingUp size={14} />
-          <span className="text-[10px] font-bold uppercase tracking-widest">
-            {showForecast ? 'Forecast ON' : 'Forecast OFF'}
-          </span>
-        </button>
+
       </div>
 
       {/* Map */}
@@ -265,7 +205,7 @@ export default function LiveHeatmap() {
             zoom={13}
             onLoad={onMapLoad}
             options={{
-              styles: LIGHT_MAP_STYLE,
+              mapId: 'DEMO_MAP_ID',
               disableDefaultUI: true,
               zoomControl: true,
               zoomControlOptions: {
@@ -336,8 +276,7 @@ export default function LiveHeatmap() {
               { color: '#f97316', label: 'High' },
               { color: '#f59e0b', label: 'Moderate' },
               { color: '#22c55e', label: 'Low' },
-              { color: '#3b82f6', label: 'Resolved' },
-              { color: '#9333ea', label: 'Forecast', dashed: true },
+              { color: '#3b82f6', label: 'Resolved' }
             ].map(item => (
               <div key={item.label} className="flex items-center gap-2">
                 <div

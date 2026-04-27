@@ -28,6 +28,7 @@ export default function VolunteerDashboard() {
   const { user, loading } = useAuth();
   const [online, setOnline] = React.useState(true);
   const [missions, setMissions] = React.useState<any[]>([]);
+  const [completedMissions, setCompletedMissions] = React.useState<any[]>([]);
   const [activeMission, setActiveMission] = React.useState<any>(null);
   const [showMission, setShowMission] = React.useState(false);
   const [gpsError, setGpsError] = React.useState<string | null>(null);
@@ -48,26 +49,49 @@ export default function VolunteerDashboard() {
     };
   }, [online, user, loading]);
 
+  // Listen to PENDING missions and COMPLETED missions
   React.useEffect(() => {
     if (loading || !user) return;
 
     // Listen to available missions matched to this volunteer or pending
-    const q = query(
+    const qPending = query(
       collection(db, 'missions'), 
       where('status', '==', 'PENDING')
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubPending = onSnapshot(qPending, (snapshot) => {
       const liveMissions = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
-      setMissions(liveMissions);
+      } as any));
+      // Filter for missions explicitly assigned to this volunteer or broadcasted
+      const relevant = liveMissions.filter(m => !m.volunteerId || m.volunteerId === user.uid);
+      setMissions(relevant);
     }, (error) => {
-      console.error("Volunteer Dashboard snapshot error:", error);
+      console.error("Volunteer pending snapshot error:", error);
     });
 
-    return () => unsubscribe();
+    // Listen to completed missions by this volunteer
+    const qCompleted = query(
+      collection(db, 'missions'),
+      where('volunteerId', '==', user.uid),
+      where('status', '==', 'COMPLETED')
+    );
+
+    const unsubCompleted = onSnapshot(qCompleted, (snapshot) => {
+      const completed = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as any));
+      setCompletedMissions(completed);
+    }, (error) => {
+      console.error("Volunteer completed snapshot error:", error);
+    });
+
+    return () => {
+      unsubPending();
+      unsubCompleted();
+    };
   }, [user, loading]);
 
   const handleAcceptMission = async (missionId: string) => {
@@ -98,6 +122,30 @@ export default function VolunteerDashboard() {
       setActiveMission(null);
     } catch (error) {
       console.error("Mission acceptance failed", error);
+    }
+  };
+
+  const handleCompleteMission = async (missionId: string) => {
+    try {
+      const mission = completedMissions.find(m => m.id === missionId) || activeMission;
+      if (!mission) return;
+
+      const missionRef = doc(db, 'missions', missionId);
+      const reportRef = doc(db, 'reports', mission.reportId);
+
+      await Promise.all([
+        updateDoc(missionRef, {
+          status: 'COMPLETED',
+          completedAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }),
+        updateDoc(reportRef, {
+          status: 'RESOLVED',
+          updatedAt: serverTimestamp()
+        })
+      ]);
+    } catch (error) {
+      console.error("Mission completion failed", error);
     }
   };
 
@@ -184,25 +232,39 @@ export default function VolunteerDashboard() {
           </div>
 
           <div className="mt-12">
-            <h3 className="text-lg font-bold uppercase tracking-wide text-gray-900 mb-6">Completed Operations</h3>
-            <div className="space-y-4">
-              {[1, 2].map((i) => (
-                <div key={i} className="bg-white p-6 border border-gray-200 hover:border-gray-300 transition-colors flex items-center justify-between shadow-sm">
-                  <div className="flex items-center gap-6">
-                    <div className="w-12 h-12 bg-green-50 border border-green-100 flex items-center justify-center text-green-600">
-                      <CheckCircle2 size={24} />
+            <h3 className="text-lg font-bold uppercase tracking-wide text-gray-900 mb-6 flex justify-between items-center">
+              <span>Completed Operations</span>
+              <span className="text-xs text-blue-600 bg-blue-50 px-3 py-1 border border-blue-100">{completedMissions.length} TOTAL</span>
+            </h3>
+            
+            {completedMissions.length === 0 ? (
+              <div className="text-center py-12 bg-white border border-gray-200 text-gray-400 uppercase text-xs tracking-widest font-bold">
+                No missions completed yet
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {completedMissions.map((mission) => (
+                  <div key={mission.id} className="bg-white p-6 border border-gray-200 hover:border-gray-300 transition-colors flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-6">
+                      <div className="w-12 h-12 bg-green-50 border border-green-100 flex items-center justify-center text-green-600">
+                        <CheckCircle2 size={24} />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold uppercase tracking-wide text-gray-900 mb-1">
+                          {mission.type || 'Field Support'} • {mission.locationDescription || 'Unknown Location'}
+                        </div>
+                        <div className="text-xs text-gray-500 uppercase font-semibold">
+                          Task Completed • {mission.completedAt?.toDate().toLocaleTimeString() || '00:00'}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-sm font-bold uppercase tracking-wide text-gray-900 mb-1">Field Support • Sector {i * 12}</div>
-                      <div className="text-xs text-gray-500 uppercase font-semibold">Task Completed • 0{i}:14 HRS</div>
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-blue-600 tracking-tight">+{Math.round((mission.urgencyScore || 5) * 20)} XP</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-bold text-blue-600 tracking-tight">+{i * 120} XP</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -230,13 +292,13 @@ export default function VolunteerDashboard() {
             <div className="mb-8">
               <div className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">Deployment Opportunity</div>
               <h3 className="text-2xl font-bold uppercase tracking-tight leading-tight mb-4 text-gray-900">
-                {activeMission?.needType?.[0] || 'Emergency'} Task • {activeMission?.location || 'SECTOR RADIAL'}
+                {activeMission?.type || activeMission?.needType?.[0] || 'Emergency'} Task • {activeMission?.locationDescription || 'Unknown Area'}
               </h3>
               
               <div className="flex flex-wrap gap-3">
                 <div className="px-3 py-1 bg-gray-50 border border-gray-200 flex items-center gap-2 text-xs font-bold uppercase text-gray-600">
                   <MapPin size={12} />
-                  Distance: 2.1km
+                  GPS Verified
                 </div>
                 <div className="px-3 py-1 bg-blue-50 border border-blue-200 flex items-center gap-2 text-xs font-bold uppercase text-blue-700">
                   <Activity size={12} />
@@ -246,7 +308,7 @@ export default function VolunteerDashboard() {
             </div>
 
             <p className="text-sm text-gray-700 leading-relaxed mb-8 border-l-4 border-blue-600 pl-4 py-1 font-medium">
-              {activeMission?.text || 'Automated assessment suggests immediate field deployment required to resolve critical bottlenecks in the area.'}
+              {activeMission?.text || activeMission?.summary || 'No detailed briefing available for this deployment.'}
             </p>
 
             <div className="space-y-4">

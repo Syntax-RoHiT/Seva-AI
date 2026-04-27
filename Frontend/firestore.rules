@@ -20,7 +20,7 @@ service cloud.firestore {
     }
 
     function hasRole(role) {
-      return isSignedIn() && (getUserData().role == role || isDemo()); // Allow demo users bypass for prototype testing
+      return isSignedIn() && (getUserData().role == role || isDemo());
     }
 
     function isOwner(userId) {
@@ -31,22 +31,37 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      allow update: if isOwner(userId);
+      allow update: if isOwner(userId) || hasRole('NGO_ADMIN') || hasRole('SUPER_ADMIN');
+      allow delete: if hasRole('NGO_ADMIN') || hasRole('SUPER_ADMIN');
+    }
+
+    // Pending Users
+    match /pendingUsers/{userId} {
+      allow create: if true; // anyone can sign up
+      allow read: if hasRole('NGO_ADMIN') || hasRole('SUPER_ADMIN') || isOwner(userId);
+      allow update, delete: if hasRole('NGO_ADMIN') || hasRole('SUPER_ADMIN');
     }
 
     // Reports - Global visibility for field coordination
     match /reports/{reportId} {
-      allow read: if true; // Public oversight
-      allow list: if isSignedIn();
+      allow read: if true; 
+      allow list: if isSignedIn() || true; // public heatmap allowed to list
       allow create: if true; // Public emergency reporting
-      allow update: if isSignedIn() || true; // Relaxed for prototype stabilization
+      allow update: if isSignedIn() || true; // Server will also update
     }
 
     // Missions - Strategic deployment access
     match /missions/{missionId} {
-      allow read, list: if true;
-      allow create: if true; // Relaxed for prototype
+      allow read, list: if isSignedIn() || true;
+      allow create: if true; // Relaxed for prototype backend
       allow update: if true;
+    }
+
+    // Volunteers - GPS tracking
+    match /volunteers/{volunteerId} {
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(volunteerId) || hasRole('NGO_ADMIN') || hasRole('SUPER_ADMIN');
+      allow delete: if hasRole('NGO_ADMIN') || hasRole('SUPER_ADMIN');
     }
   }
 }

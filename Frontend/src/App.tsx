@@ -4,60 +4,104 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { lightTheme } from './theme';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
+import AwaitingApprovalPage from './pages/AwaitingApprovalPage';
 import Shell from './components/layout/Shell';
 import NGOAdminDashboard from './pages/admin/NGOAdminDashboard';
 import ReporterPage from './pages/reporter/ReporterPage';
 import VolunteerDashboard from './pages/volunteer/VolunteerDashboard';
-import GovernmentDashboard from './pages/government/GovernmentDashboard';
 import HeatmapPage from './pages/heatmap/HeatmapPage';
+import TeamsPage from './pages/admin/TeamsPage';
+import AnalyticsPage from './pages/admin/AnalyticsPage';
+import SettingsPage from './pages/admin/SettingsPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
-
 function AppRoutes() {
-  const { user, role, loading } = useAuth();
+  const { user, role, approved, loading } = useAuth();
 
-  if (loading) return null; // Or a loading spinner
+  if (loading) return (
+    <div className="h-screen w-screen bg-gray-50 flex items-center justify-center font-sans">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Initializing...</p>
+      </div>
+    </div>
+  );
+
+  // If logged in but not approved → hold page
+  const approvalGate = user && !approved && !user.isAnonymous
+    ? <Navigate to="/awaiting-approval" />
+    : null;
 
   return (
     <Routes>
+      {/* Public */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<AuthPage />} />
-      
-      {/* Protected Routes Wrapper */}
+      <Route path="/login" element={<AuthPage initialTab="login" />} />
+      <Route path="/signup" element={<AuthPage initialTab="signup" />} />
+      <Route path="/awaiting-approval" element={<AwaitingApprovalPage />} />
+
+      {/* Field Reporter — no login required */}
+      <Route path="/report" element={<ReporterPage />} />
+
+      {/* Protected Dashboard */}
       <Route path="/dashboard" element={
-        user ? (
-          <Shell role={role}>
-            {role === 'NGO_ADMIN' && <NGOAdminDashboard />}
-            {role === 'VOLUNTEER' && <VolunteerDashboard />}
-            {role === 'REPORTER' && <Navigate to="/report" />}
-            {role === 'GOVERNMENT' && <GovernmentDashboard />}
-            {role === 'SUPER_ADMIN' && <NGOAdminDashboard />} {/* Demo fallback */}
-          </Shell>
-        ) : (
-          <Navigate to="/login" />
-        )
+        !user ? <Navigate to="/login" /> :
+        approvalGate ??
+        <Shell role={role}>
+          {role === 'NGO_ADMIN' && <NGOAdminDashboard />}
+          {role === 'SUPER_ADMIN' && <NGOAdminDashboard />}
+          {role === 'VOLUNTEER' && <VolunteerDashboard />}
+        </Shell>
       } />
 
-      <Route path="/report" element={<ReporterPage />} />
-      
-      {/* Shared shell routes */}
-      <Route path="/heatmap" element={user ? <Shell role={role}><HeatmapPage /></Shell> : <Navigate to="/login" />} />
-      <Route path="/volunteers" element={user ? <Shell role={role}><NGOAdminDashboard /></Shell> : <Navigate to="/login" />} />
-      <Route path="/cases" element={user ? <Shell role={role}><NGOAdminDashboard /></Shell> : <Navigate to="/login" />} />
-      <Route path="/analytics" element={user ? <Shell role={role}><GovernmentDashboard /></Shell> : <Navigate to="/login" />} />
-      
-      {/* Placeholder Routes for Sidebar Links */}
-      <Route path="/teams" element={user ? <Shell role={role}><PlaceholderPage title="Teams & Units" /></Shell> : <Navigate to="/login" />} />
-      <Route path="/settings" element={user ? <Shell role={role}><PlaceholderPage title="System Settings" /></Shell> : <Navigate to="/login" />} />
-      <Route path="/tasks" element={user ? <Shell role={role}><PlaceholderPage title="Task Management" /></Shell> : <Navigate to="/login" />} />
-      <Route path="/inventory" element={user ? <Shell role={role}><PlaceholderPage title="Inventory Network" /></Shell> : <Navigate to="/login" />} />
-      <Route path="/policy" element={user ? <Shell role={role}><PlaceholderPage title="Policy Directives" /></Shell> : <Navigate to="/login" />} />
-      <Route path="/reports" element={user ? <Shell role={role}><PlaceholderPage title="Global Reports" /></Shell> : <Navigate to="/login" />} />
-      <Route path="/my-reports" element={user ? <Shell role={role}><PlaceholderPage title="My Submissions" /></Shell> : <Navigate to="/login" />} />
-      <Route path="/users" element={user ? <Shell role={role}><PlaceholderPage title="User Registry" /></Shell> : <Navigate to="/login" />} />
-      <Route path="/logs" element={user ? <Shell role={role}><PlaceholderPage title="System Logs" /></Shell> : <Navigate to="/login" />} />
-      
+      {/* Shell routes */}
+      <Route path="/heatmap" element={
+        !user ? <Navigate to="/login" /> :
+        approvalGate ??
+        <Shell role={role}><HeatmapPage /></Shell>
+      } />
+      <Route path="/volunteers" element={
+        !user ? <Navigate to="/login" /> :
+        approvalGate ??
+        <Shell role={role}><NGOAdminDashboard /></Shell>
+      } />
+      <Route path="/cases" element={
+        !user ? <Navigate to="/login" /> :
+        approvalGate ??
+        <Shell role={role}><NGOAdminDashboard /></Shell>
+      } />
+      <Route path="/tasks" element={
+        !user ? <Navigate to="/login" /> :
+        approvalGate ??
+        <Shell role={role}><PlaceholderPage title="Task Management" /></Shell>
+      } />
+      <Route path="/teams" element={
+        !user ? <Navigate to="/login" /> :
+        approvalGate ??
+        <Shell role={role}><TeamsPage /></Shell>
+      } />
+      <Route path="/analytics" element={
+        !user ? <Navigate to="/login" /> :
+        approvalGate ??
+        <Shell role={role}><AnalyticsPage /></Shell>
+      } />
+      <Route path="/settings" element={
+        !user ? <Navigate to="/login" /> :
+        approvalGate ??
+        <Shell role={role}><SettingsPage /></Shell>
+      } />
+      <Route path="/users" element={
+        !user ? <Navigate to="/login" /> :
+        approvalGate ??
+        <Shell role={role}><TeamsPage /></Shell>
+      } />
+      <Route path="/logs" element={
+        !user ? <Navigate to="/login" /> :
+        approvalGate ??
+        <Shell role={role}><PlaceholderPage title="System Logs" /></Shell>
+      } />
+
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
@@ -74,13 +118,11 @@ export default function App() {
         messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
         appId:             import.meta.env.VITE_FIREBASE_APP_ID,
       };
-      
       const queryParams = new URLSearchParams(config as any).toString();
-      
       navigator.serviceWorker
         .register(`/firebase-messaging-sw.js?${queryParams}`)
-        .then((reg) => console.log('[SW] Registered with dynamic config', reg.scope))
-        .catch((err) => console.error('[SW] Registration failed', err));
+        .then(reg => console.log('[SW] Registered', reg.scope))
+        .catch(err => console.error('[SW] Failed', err));
     }
   }, []);
 
