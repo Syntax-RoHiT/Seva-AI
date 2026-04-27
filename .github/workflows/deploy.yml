@@ -34,6 +34,9 @@ jobs:
           gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
       # --- BACKEND DEPLOYMENT ---
+      - name: Create Backend .env
+        run: echo "${{ secrets.BACKEND_ENV }}" > ./Backend/.env
+
       - name: Build and Push Backend Image
         run: |
           docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }} ./Backend
@@ -49,6 +52,9 @@ jobs:
             --port 8080
 
       # --- FRONTEND DEPLOYMENT ---
+      - name: Create Frontend .env
+        run: echo "${{ secrets.FRONTEND_ENV }}" > ./Frontend/.env
+
       - name: Build and Push Frontend Image
         run: |
           docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }} ./Frontend
@@ -62,3 +68,4 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --port 80
+
