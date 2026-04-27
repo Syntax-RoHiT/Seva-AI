@@ -50,7 +50,6 @@ export default function ReporterPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Form state
   const [submitted, setSubmitted] = React.useState(false);
   const [selectedType, setSelectedType] = React.useState('medical');
   const [severity, setSeverity] = React.useState(3);
@@ -58,13 +57,11 @@ export default function ReporterPage() {
   const [affectedCount, setAffectedCount] = React.useState('');
   const [loading, setLoading] = React.useState(false);
 
-  // Edge AI state
   const [aiMode, setAIMode] = React.useState<AIMode>('CHECKING');
   const [aiStatusMsg, setAIStatusMsg] = React.useState('Detecting AI capabilities...');
   const [lastInferenceMs, setLastInferenceMs] = React.useState<number | undefined>();
   const [isOffline, setIsOffline] = React.useState(!navigator.onLine);
 
-  // Media state
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
   const [imageLoading, setImageLoading] = React.useState(false);
   const [imageParsed, setImageParsed] = React.useState(false);
@@ -72,7 +69,6 @@ export default function ReporterPage() {
   const [locationLoading, setLocationLoading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Check AI capabilities on mount
   React.useEffect(() => {
     getAICapabilities().then(caps => {
       setAIMode(caps.mode as AIMode);
@@ -91,7 +87,6 @@ export default function ReporterPage() {
     };
   }, []);
 
-  // ── Image Upload + OCR ──────────────────────────────────────────────────────
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -137,7 +132,6 @@ export default function ReporterPage() {
     reader.readAsDataURL(file);
   };
 
-  // ── Geolocation ─────────────────────────────────────────────────────────────
   const handleLocationLock = () => {
     if (!navigator.geolocation) return;
     setLocationLoading(true);

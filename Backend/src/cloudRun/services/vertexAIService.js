@@ -1,15 +1,3 @@
-/**
- * Seva AI — Vertex AI Service (Gemma 4 31B)
- *
- * Uses Google Cloud Vertex AI Gemini/Gemma endpoint for:
- *   - Deep contextual reasoning with 256K context window
- *   - Native function calling (agentic capabilities)
- *   - Complex multi-factor disaster assessment
- *
- * Model: gemma-3-27b-it (Vertex AI — closest available to Gemma 4 31B)
- * Endpoint: us-central1-aiplatform.googleapis.com
- */
-
 const { VertexAI } = require('@google-cloud/vertexai');
 
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || 'seva-ai-prod';

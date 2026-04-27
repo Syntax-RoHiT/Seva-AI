@@ -1,14 +1,3 @@
-/**
- * Seva AI — Gemini Parser Cloud Function
- *
- * Triggered: onDocumentCreated('reports/{reportId}')
- * Purpose:
- *   1. Takes raw text/audio transcript from a new report
- *   2. Sends to Gemini 1.5 Flash for multimodal NLP extraction
- *   3. Writes structured fields back to the same Firestore document
- *   4. Publishes to 'new-report' Pub/Sub topic to trigger Swarm Assembler
- */
-
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { GoogleGenAI, Type } = require('@google/genai');
 const admin = require('firebase-admin');

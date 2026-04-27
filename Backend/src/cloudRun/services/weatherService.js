@@ -1,13 +1,3 @@
-/**
- * Seva AI — Weather Risk Service (Agentic Tool)
- *
- * Called by Gemma 4 31B's function calling during disaster report reasoning.
- * Uses Open-Meteo API (free, no auth required — perfect for hackathon demo).
- *
- * Returns a structured risk assessment usable as a weather bonus (+0.5 to +1.5)
- * in the Urgency Decay Formula: U = S × (1 + T/12) × Z + R + W
- */
-
 const fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...args));
 
 /**

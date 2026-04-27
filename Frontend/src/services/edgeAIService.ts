@@ -1,15 +1,3 @@
-/**
- * Seva AI — Edge AI Service (Layer 1: Field Worker)
- *
- * Uses Gemma 4 E2B running locally in the browser via:
- *   1. Chrome Built-in AI API (Gemma Nano — Prompt API, Gemini Nano on-device)
- *   2. WebGPU + @huggingface/transformers fallback (Gemma 2B)
- *   3. Server-side Gemini 1.5 Flash final fallback (when offline fails)
- *
- * This architecture means the app works even with NO internet connection
- * — critical for rural India fieldwork use cases.
- */
-
 export interface EdgeAIResult {
   needType: string[];
   severity: number;

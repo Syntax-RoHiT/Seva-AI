@@ -1,14 +1,3 @@
-/**
- * Seva AI — Distance Matrix Service (Layer 4: Volunteer Matching)
- *
- * Uses the Google Maps Distance Matrix API to get real driving distances
- * (not straight-line Haversine) for the Hungarian matching algorithm.
- * This ensures volunteers are matched by actual travel time, not crow-flies km.
- *
- * Batch limit: 25 origins × 25 destinations per request
- * Fallback: Haversine when API key is missing or quota exceeded
- */
-
 const fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...args));
 
 const MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || '';

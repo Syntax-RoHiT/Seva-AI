@@ -1,15 +1,3 @@
-/**
- * Seva AI — SEVA Engine Cloud Run Service
- *
- * Runs on Google Cloud Run (Node.js 20).
- * This is the AGENTIC reasoning layer between raw reports and Firestore.
- *
- * Flow:
- *   POST /process-report  → Gemma 4 31B reasoning + function calling → Firestore update
- *   POST /swarm-cycle     → Hungarian matching → write missions
- *   GET  /health          → health check for Cloud Run
- */
-
 const express = require('express');
 const admin = require('firebase-admin');
 const { vertexAIReason } = require('./services/vertexAIService');

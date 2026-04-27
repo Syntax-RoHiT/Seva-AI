@@ -1,19 +1,3 @@
-/**
- * Seva AI — Urgency Decay Engine (Cloud Function)
- *
- * Triggered: Scheduled every 15 minutes via Cloud Scheduler
- * Purpose:
- *   Re-calculates urgency scores for all OPEN reports using the formula:
- *   U = S × (1 + T / 12) × Z + R + W
- *
- *   As time passes unresolved, scores escalate automatically:
- *   - GREEN zones can escalate to AMBER, ORANGE, or RED
- *   - RED zones trigger immediate re-notification if volunteers not dispatched
- *
- * This is the core "living heatmap" intelligence — the map changes colors
- * without any human input.
- */
-
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
 const { PubSub } = require('@google-cloud/pubsub');

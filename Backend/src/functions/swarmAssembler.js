@@ -1,16 +1,3 @@
-/**
- * Seva AI — Swarm Assembler Cloud Function (Server-Side)
- *
- * Triggered: Pub/Sub topic 'new-report'
- * Purpose:
- *   Implements the Hungarian Algorithm for globally optimal volunteer-task matching.
- *   This runs server-side so it has access to ALL volunteers and ALL pending reports,
- *   not just the ones visible in the current browser session.
- *
- * Algorithm: Kuhn-Munkres (Hungarian) — O(N³) — globally optimal bipartite matching
- * Cost function: 70% Haversine distance (km) + 30% skill mismatch penalty
- */
-
 const { onMessagePublished } = require('firebase-functions/v2/pubsub');
 const admin = require('firebase-admin');
 

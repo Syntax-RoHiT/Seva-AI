@@ -7,7 +7,6 @@ import { Globe, Loader2, Radio, TrendingUp } from 'lucide-react';
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 const LIBRARIES: ('visualization' | 'geometry')[] = ['visualization'];
 
-// Premium tactical dark map style
 const NIGHT_MAP_STYLE = [
   { elementType: 'geometry', stylers: [{ color: '#0a0a0a' }] },
   { elementType: 'labels.text.stroke', stylers: [{ color: '#000000' }] },
@@ -36,7 +35,6 @@ const NIGHT_MAP_STYLE = [
 const center = { lat: 26.9124, lng: 75.7873 };
 const mapContainerStyle = { width: '100%', height: '100%' };
 
-// Seed mock zone data for demo visuals when no live data exists
 const SEED_ZONES = [
   { id: 'S1', lat: 26.9200, lng: 75.7900, urgencyScore: 9.8 },
   { id: 'S2', lat: 26.9000, lng: 75.7700, urgencyScore: 8.5 },
@@ -46,7 +44,6 @@ const SEED_ZONES = [
   { id: 'S6', lat: 26.9250, lng: 75.7650, urgencyScore: 2.5 },
 ];
 
-// BigQuery ML forecast zones — dashed border = predicted crisis
 const FORECAST_ZONES = [
   { id: 'F1', lat: 26.9350, lng: 75.7950, predictedScore: 7.8, confidence: 'HIGH',   radiusM: 600, label: 'PREDICTED: HIGH in 24h' },
   { id: 'F2', lat: 26.8950, lng: 75.8150, predictedScore: 6.2, confidence: 'MEDIUM', radiusM: 800, label: 'PREDICTED: MOD in 48h' },
@@ -93,7 +90,6 @@ export default function LiveHeatmap() {
     libraries: LIBRARIES,
   });
 
-  // Listen to Firestore reports and merge with seed data
   useEffect(() => {
     const q = query(collection(db, 'reports'), orderBy('urgencyScore', 'desc'), limit(50));
     const unsubscribe = onSnapshot(q, (snapshot) => {
