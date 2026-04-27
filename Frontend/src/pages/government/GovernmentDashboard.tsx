@@ -13,11 +13,13 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { Download, Share2, FileText, Globe, MapPin, Activity, ShieldAlert, Navigation, ChevronRight, Zap, Target, Signal, Network, MessageSquare, Loader2, Sparkles } from 'lucide-react';
+import { Download, Share2, Globe, MapPin, Activity, Network, Sparkles, Loader2 } from 'lucide-react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { summarizeSituation } from '../../services/geminiService';
+import LookerStudioEmbed from '../../components/analytics/LookerStudioEmbed';
+
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
@@ -342,6 +344,9 @@ export default function GovernmentDashboard() {
            </Grid>
         </Grid>
       </Grid>
+
+      {/* Social Impact Analytics — Looker Studio */}
+      <LookerStudioEmbed />
     </div>
   );
 }

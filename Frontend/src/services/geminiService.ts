@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -8,11 +8,15 @@ export interface ParsedReport {
   affectedCount: number;
   locationDescription: string;
   isLifeThreatening: boolean;
+  summary: string;
 }
 
+/**
+ * Parses a text-based report into structured data.
+ */
 export const parseIncidentReport = async (text: string): Promise<ParsedReport> => {
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-1.5-flash",
     contents: `Analyze this disaster relief report and extract structured data: "${text}"`,
     config: {
       responseMimeType: "application/json",
@@ -39,9 +43,13 @@ export const parseIncidentReport = async (text: string): Promise<ParsedReport> =
           isLifeThreatening: {
             type: Type.BOOLEAN,
             description: "Whether the situation is immediately life-threatening"
+          },
+          summary: {
+            type: Type.STRING,
+            description: "A 1-sentence summary of the incident"
           }
         },
-        required: ["needType", "severity", "isLifeThreatening"]
+        required: ["needType", "severity", "isLifeThreatening", "summary"]
       }
     }
   });
@@ -55,20 +63,80 @@ export const parseIncidentReport = async (text: string): Promise<ParsedReport> =
       severity: 3,
       affectedCount: 0,
       locationDescription: "Unknown",
-      isLifeThreatening: false
+      isLifeThreatening: false,
+      summary: "Incident report received."
     };
   }
 };
 
-export const chatWithAssistant = async (message: string, history: { role: 'user' | 'model', parts: { text: string }[] }[] = []) => {
+/**
+ * Parses an image-based report (OCR + Context) into structured data.
+ */
+export const parseImageReport = async (base64Image: string, mimeType: string = "image/jpeg"): Promise<ParsedReport> => {
+  const response = await ai.models.generateContent({
+    model: "gemini-1.5-flash",
+    contents: [
+      {
+        inlineData: {
+          data: base64Image.split(",")[1] || base64Image,
+          mimeType: mimeType
+        }
+      },
+      "Extract structured data from this field report or survey form. Identify the type of need, severity, location, and population affected. If handwritten, use your best OCR capabilities."
+    ],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          needType: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          },
+          severity: {
+            type: Type.INTEGER
+          },
+          affectedCount: {
+            type: Type.INTEGER
+          },
+          locationDescription: {
+            type: Type.STRING
+          },
+          isLifeThreatening: {
+            type: Type.BOOLEAN
+          },
+          summary: {
+            type: Type.STRING
+          }
+        },
+        required: ["needType", "severity", "isLifeThreatening", "summary"]
+      }
+    }
+  });
+
+  try {
+    return JSON.parse(response.text.trim()) as ParsedReport;
+  } catch (error) {
+    console.error("Failed to parse image report", error);
+    return {
+      needType: ["General"],
+      severity: 3,
+      affectedCount: 0,
+      locationDescription: "Extracted from image",
+      isLifeThreatening: false,
+      summary: "Image report processed."
+    };
+  }
+};
+
+export const chatWithAssistant = async (message: string, history: any[] = []) => {
   const chat = ai.chats.create({
-    model: "gemini-3-flash-preview",
+    model: "gemini-1.5-flash",
     history: history,
     config: {
-      systemInstruction: `You are SevaAI Tactical Assistant, a high-tech mission control AI for disaster relief and NGO management. 
-      Your tone is technical, efficient, and supportive. Use tactical language (e.g., "Scanning sector", "Signal locked", "Mission authorized").
-      Help users with reporting incidents, managing volunteers, analyzing data, and coordinating relief efforts.
-      Keep responses concise and impactful.`,
+      systemInstruction: `You are SevaAI Tactical Assistant, a high-tech mission control AI for disaster relief. 
+      Tone: Technical, efficient, supportive. Use tactical jargon. 
+      Help NGO admins and volunteers with logistics, data analysis, and task matching.`,
     }
   });
 
@@ -77,15 +145,16 @@ export const chatWithAssistant = async (message: string, history: { role: 'user'
 };
 
 export const summarizeSituation = async (reports: any[]) => {
-  const reportsText = reports.map(r => `[${r.type}] Severity ${r.severity}: ${r.text}`).join('\n');
+  const reportsText = reports.map(r => `[${r.type}] Severity ${r.severity}: ${r.summary}`).join('\n');
   
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Summarize the current disaster situation and provide tactical recommendations based on these reports:\n${reportsText}`,
+    model: "gemini-1.5-flash",
+    contents: `Summarize the current situation and provide 3 tactical priority actions:\n${reportsText}`,
     config: {
-      systemInstruction: "You are SevaAI Tactical Oversight. Provide a high-level summary (sitrep) and 3 priority action items. Use tactical, concise language."
+      systemInstruction: "You are SevaAI Tactical Oversight. Provide a high-level sitrep. Be concise."
     }
   });
 
   return response.text;
 };
+

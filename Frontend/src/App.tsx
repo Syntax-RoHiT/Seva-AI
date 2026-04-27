@@ -9,7 +9,9 @@ import NGOAdminDashboard from './pages/admin/NGOAdminDashboard';
 import ReporterPage from './pages/reporter/ReporterPage';
 import VolunteerDashboard from './pages/volunteer/VolunteerDashboard';
 import GovernmentDashboard from './pages/government/GovernmentDashboard';
+import HeatmapPage from './pages/heatmap/HeatmapPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
+
 
 function AppRoutes() {
   const { user, role, loading } = useAuth();
@@ -39,7 +41,7 @@ function AppRoutes() {
       <Route path="/report" element={<ReporterPage />} />
       
       {/* Shared shell routes */}
-      <Route path="/heatmap" element={user ? <Shell role={role}><NGOAdminDashboard /></Shell> : <Navigate to="/login" />} />
+      <Route path="/heatmap" element={user ? <Shell role={role}><HeatmapPage /></Shell> : <Navigate to="/login" />} />
       <Route path="/volunteers" element={user ? <Shell role={role}><NGOAdminDashboard /></Shell> : <Navigate to="/login" />} />
       <Route path="/cases" element={user ? <Shell role={role}><NGOAdminDashboard /></Shell> : <Navigate to="/login" />} />
       <Route path="/analytics" element={user ? <Shell role={role}><GovernmentDashboard /></Shell> : <Navigate to="/login" />} />

@@ -10,6 +10,8 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { UserRole } from '../types';
+import { registerFCMToken } from '../services/fcmService';
+
 
 interface AuthContextType {
   user: User | null;
@@ -50,7 +52,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }, { merge: true });
           
           setLoading(false);
+
+          // Register for FCM push notifications
+          registerFCMToken(user.uid).catch(console.warn);
           return;
+
         }
 
         // Fetch role from Firestore for regular users

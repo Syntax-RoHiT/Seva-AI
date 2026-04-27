@@ -30,6 +30,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { startGPSTracking, stopGPSTracking } from '../../services/gpsService';
+
 
 export default function VolunteerDashboard() {
   const { user, loading } = useAuth();
@@ -37,6 +39,23 @@ export default function VolunteerDashboard() {
   const [missions, setMissions] = React.useState<any[]>([]);
   const [activeMission, setActiveMission] = React.useState<any>(null);
   const [showMission, setShowMission] = React.useState(false);
+  const [gpsError, setGpsError] = React.useState<string | null>(null);
+  const [gpsActive, setGpsActive] = React.useState(false);
+
+  // Start GPS tracking when user is online
+  React.useEffect(() => {
+    if (!user || loading) return;
+    if (online) {
+      startGPSTracking(user.uid, (err) => setGpsError(err));
+      setGpsActive(true);
+    } else {
+      stopGPSTracking(user.uid);
+      setGpsActive(false);
+    }
+    return () => {
+      if (user) stopGPSTracking(user.uid);
+    };
+  }, [online, user, loading]);
 
   React.useEffect(() => {
     if (loading || !user) return;
@@ -105,6 +124,14 @@ export default function VolunteerDashboard() {
         </div>
         
         <div className="flex items-center gap-6 glass-panel px-6 py-4 rounded-2xl border-white/5">
+          {/* GPS Status Badge */}
+          <div className="flex items-center gap-2">
+            <span className={`w-1.5 h-1.5 rounded-full transition-colors ${gpsActive ? 'bg-green-400 animate-pulse' : 'bg-white/20'}`} />
+            <span className={`text-[9px] font-mono uppercase tracking-widest ${gpsActive ? 'text-green-400' : 'text-white/20'}`}>
+              {gpsError ? 'GPS Error' : gpsActive ? 'GPS Live' : 'GPS Off'}
+            </span>
+          </div>
+          <div className="w-px h-5 bg-white/10" />
           <div className="text-right">
             <div className={`text-[9px] font-display font-bold uppercase tracking-widest mb-1 ${online ? 'text-green-400' : 'text-white/20'}`}>
               {online ? 'Seva Sakriya' : 'Signal Offline'}

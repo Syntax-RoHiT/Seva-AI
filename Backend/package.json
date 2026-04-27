@@ -1,0 +1,21 @@
+{
+  "name": "seva-ai-backend",
+  "version": "1.0.0",
+  "description": "Seva AI Cloud Functions — Urgency Engine, Swarm Assembler, BigQuery Pipeline, FCM Notifier",
+  "engines": { "node": "20" },
+  "scripts": {
+    "start": "node src/index.js",
+    "deploy": "firebase deploy --only functions",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@google-cloud/bigquery": "^7.9.0",
+    "@google/genai": "^1.29.0",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.3.2",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  }
+}

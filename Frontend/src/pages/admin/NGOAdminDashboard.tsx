@@ -1,34 +1,25 @@
-import React from 'react';
 import { 
   Grid, 
-  Typography, 
-  Stack, 
-  alpha, 
-  useTheme, 
-  IconButton,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  LinearProgress
 } from '@mui/material';
+
+import React from 'react';
 import { 
   TrendingUp, 
   Users, 
   Activity, 
   ShieldAlert, 
-  ArrowUpRight, 
-  Filter,
-  MoreVertical,
+  ArrowUpRight,
   Navigation,
-  Loader2,
-  Zap,
   Target,
   Cpu,
-  Globe
 } from 'lucide-react';
+
 import { collection, query, orderBy, onSnapshot, limit, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { motion } from 'motion/react';
@@ -38,9 +29,11 @@ import {
   ResponsiveContainer,
   Tooltip
 } from 'recharts';
-import { GoogleMap, useJsApiLoader, InfoWindow, Marker } from '@react-google-maps/api';
-
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import TacticalAssistant from '../../components/ai/TacticalAssistant';
+import { runSwarmMatch } from '../../services/matchingService';
+import LiveHeatmap from '../../components/maps/LiveHeatmap';
+import { useAuth } from '../../context/AuthContext';
 
 const stats = [
   { label: 'Sanchalan Status', value: '42', change: '+12%', color: '#60A5FA', icon: <Target size={18} /> },
@@ -67,36 +60,11 @@ const chartData = [
   { name: '20:00', value: 1100 },
 ];
 
-const mapContainerStyle = {
-  width: '100%',
-  height: '100%',
-};
-
-const center = {
-  lat: 26.9124, 
-  lng: 75.7873,
-};
-
-const impactfulZones = [
-  { id: 1, name: 'Sector 4 ALPHA', lat: 26.9200, lng: 75.7900, type: 'CRITICAL', label: 'Landslide Risk', severity: 9.8 },
-  { id: 2, name: 'River Point BRAVO', lat: 26.9000, lng: 75.7700, type: 'URGENT', label: 'Evacuation Required', severity: 8.5 },
-  { id: 3, name: 'Downtown CHARLIE', lat: 26.9150, lng: 75.8000, type: 'NORMAL', label: 'Capacity: 95%', severity: 4.2 },
-  { id: 4, name: 'Old Town DELTA', lat: 26.9300, lng: 75.7800, type: 'URGENT', label: 'Critical Infrastructure', severity: 7.2 },
-];
-
-import { useAuth } from '../../context/AuthContext';
 
 export default function NGOAdminDashboard() {
   const { user, loading } = useAuth();
-  const theme = useTheme();
-  const [selectedZone, setSelectedZone] = React.useState<any>(null);
   const [liveReports, setLiveReports] = React.useState<any[]>([]);
-  const [isSyncing, setIsSyncing] = React.useState(true);
 
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY
-  });
 
   React.useEffect(() => {
     if (loading || !user) return;
@@ -113,7 +81,6 @@ export default function NGOAdminDashboard() {
         ...doc.data()
       }));
       setLiveReports(reports);
-      setIsSyncing(false);
     }, (error) => {
       console.error("NGO Dashboard snapshot error:", error);
     });
@@ -135,9 +102,25 @@ export default function NGOAdminDashboard() {
           </div>
         
         <div className="flex items-center gap-4">
-          <button className="px-6 py-3 rounded-xl border border-white/10 font-display text-[11px] tracking-widest font-bold uppercase hover:bg-white/5 transition-all flex items-center gap-2">
-            <Filter size={14} />
-            Suchna Filter
+          <button 
+            onClick={async () => {
+              try {
+                // Mock volunteers for demo
+                const mockVolunteers = [
+                  { id: 'V1', name: 'Rahul', location: { lat: 26.91, lng: 75.78 }, skills: ['RESCUE', 'MEDICAL'] },
+                  { id: 'V2', name: 'Priya', location: { lat: 26.92, lng: 75.79 }, skills: ['FOOD', 'WATER'] },
+                ];
+                const matches = await runSwarmMatch(liveReports, mockVolunteers);
+                console.log("Swarm Match Results:", matches);
+                alert(`Swarm Assembler Optimized ${matches.length} deployments.`);
+              } catch (error) {
+                console.error("Matching failed", error);
+              }
+            }}
+            className="px-6 py-3 rounded-xl border border-white/10 font-display text-[11px] tracking-widest font-bold uppercase hover:bg-white/5 transition-all flex items-center gap-2"
+          >
+            <Cpu size={14} />
+            Swarm Assembler
           </button>
           <button className="px-6 py-3 rounded-xl bg-white text-black font-display text-[11px] tracking-widest font-black uppercase hover:bg-secondary-container transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
             <Navigation size={14} />
@@ -172,75 +155,9 @@ export default function NGOAdminDashboard() {
 
       {/* Bento Grid Main */}
       <Grid container spacing={4}>
-        {/* Tactical Map */}
+        {/* Live Urgency Heatmap */}
         <Grid item xs={12} lg={8}>
-          <div className="glass-panel overflow-hidden rounded-[2.5rem] border border-white/10 h-[600px] relative">
-            <div className="absolute top-8 left-8 z-20 flex items-center gap-4">
-              <div className="px-4 py-2 bg-black/80 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3">
-                <Globe size={14} className="text-secondary-container animate-spin-slow" />
-                <span className="text-[10px] font-display font-bold uppercase tracking-widest">Tactical Scan Over: Jaipur Interior</span>
-              </div>
-              {isSyncing && (
-                <div className="px-4 py-2 bg-black/80 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2">
-                  <Loader2 size={12} className="animate-spin text-white/40" />
-                  <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/40">Syncing...</span>
-                </div>
-              )}
-            </div>
-
-            <div className="w-full h-full grayscale-[0.8] contrast-[1.2] opacity-80 group">
-              {isLoaded ? (
-                <GoogleMap
-                  mapContainerStyle={mapContainerStyle}
-                  center={center}
-                  zoom={13}
-                  options={{
-                    mapTypeId: 'satellite',
-                    disableDefaultUI: true,
-                    styles: [{ featureType: 'all', elementType: 'labels', stylers: [{ visibility: 'on' }] }]
-                  }}
-                >
-                  {impactfulZones.map(zone => (
-                    <Marker
-                      key={zone.id}
-                      position={{ lat: zone.lat, lng: zone.lng }}
-                      onClick={() => setSelectedZone(zone)}
-                      icon={{
-                        path: 0, // Path to CIRCLE
-                        fillColor: zone.type === 'CRITICAL' ? '#F87171' : '#FBBF24',
-                        fillOpacity: 0.6,
-                        strokeWeight: 2,
-                        strokeColor: '#FFFFFF',
-                        scale: 25,
-                      }}
-                    />
-                  ))}
-                </GoogleMap>
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-white/5">
-                  <Cpu size={40} className="text-white/10 animate-pulse" />
-                  <span className="text-[10px] font-display font-bold uppercase tracking-widest text-white/20">Awaiting Satellite Link</span>
-                </div>
-              )}
-            </div>
-
-            {/* Map Overlay Stats */}
-            <div className="absolute bottom-8 left-8 right-8 z-20 flex justify-between gap-4 pointer-events-none">
-              <div className="glass-panel p-4 rounded-xl pointer-events-auto border-white/5">
-                <div className="text-[9px] font-display font-bold uppercase tracking-[0.2em] text-white/30 mb-2">Signal Distribution</div>
-                <div className="flex gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
-                    <span className="text-[10px] font-mono text-white/60">LVL5: 03</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
-                    <span className="text-[10px] font-mono text-white/60">LVL3: 12</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <LiveHeatmap />
         </Grid>
 
         {/* Analytics Card */}
@@ -465,6 +382,7 @@ export default function NGOAdminDashboard() {
           </div>
         </Grid>
       </Grid>
+      <TacticalAssistant />
     </div>
   );
 }
