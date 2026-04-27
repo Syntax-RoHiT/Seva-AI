@@ -1,0 +1,64 @@
+name: Build and Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: seva-ai-494607
+  REGION: asia-south1
+  BACKEND_SERVICE: seva-backend
+  FRONTEND_SERVICE: seva-frontend
+  REPOSITORY: seva-ai-repo
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      # --- BACKEND DEPLOYMENT ---
+      - name: Build and Push Backend Image
+        run: |
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }} ./Backend
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }}
+
+      - name: Deploy Backend to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.BACKEND_SERVICE }} \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 8080
+
+      # --- FRONTEND DEPLOYMENT ---
+      - name: Build and Push Frontend Image
+        run: |
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }} ./Frontend
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }}
+
+      - name: Deploy Frontend to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.FRONTEND_SERVICE }} \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 80

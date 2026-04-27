@@ -32,3 +32,5 @@ Thumbs.db
 # Service Accounts
 **/*service-account.json
 **/credentials.json
+Backend/*.json
+
