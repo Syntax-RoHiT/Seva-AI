@@ -38,29 +38,29 @@ export default function LookerStudioEmbed({ compact = false }: Props) {
   const [showEmbed, setShowEmbed] = React.useState(false);
 
   return (
-    <div className="glass-panel rounded-[2.5rem] border border-white/10 overflow-hidden">
+    <div className="bg-white border border-gray-200 shadow-sm overflow-hidden text-gray-900">
       {/* Header */}
-      <div className="p-6 border-b border-white/5 flex items-center justify-between">
+      <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-gray-50">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-            <BarChart2 size={18} />
+          <div className="p-3 bg-blue-50 text-blue-600 border border-blue-100">
+            <BarChart2 size={20} />
           </div>
           <div>
-            <h3 className="font-display text-sm font-black uppercase tracking-tighter">
-              Samajik Prabhav Metrics
+            <h3 className="text-sm font-bold uppercase tracking-wide">
+              Social Impact Metrics
             </h3>
-            <p className="text-[9px] font-mono text-white/30 uppercase tracking-widest">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">
               Powered by Looker Studio + BigQuery ML
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {LOOKER_URL && (
             <button
               onClick={() => setShowEmbed(e => !e)}
-              className="px-4 py-2 rounded-xl border border-white/10 text-[9px] font-mono uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 transition-all flex items-center gap-2"
+              className="px-4 py-2 border border-gray-300 bg-white text-[10px] font-bold uppercase tracking-widest text-gray-600 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-colors flex items-center gap-2"
             >
-              <BarChart2 size={12} />
+              <BarChart2 size={14} />
               {showEmbed ? 'Show Cards' : 'Live Report'}
             </button>
           )}
@@ -68,9 +68,9 @@ export default function LookerStudioEmbed({ compact = false }: Props) {
             href="https://lookerstudio.google.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 rounded-xl border border-white/10 text-[9px] font-mono uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 transition-all flex items-center gap-2"
+            className="px-4 py-2 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm"
           >
-            <ExternalLink size={12} />
+            <ExternalLink size={14} />
             Open Full Report
           </a>
         </div>
@@ -78,12 +78,12 @@ export default function LookerStudioEmbed({ compact = false }: Props) {
 
       {/* Looker Studio iframe OR demo metric cards */}
       {LOOKER_URL && showEmbed ? (
-        <div className="relative h-[500px]">
+        <div className="relative h-[500px] bg-gray-50">
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-              <div className="flex items-center gap-3 text-white/40">
-                <RefreshCw size={20} className="animate-spin" />
-                <span className="text-[11px] font-mono uppercase tracking-widest">Loading Looker Studio...</span>
+            <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10 backdrop-blur-sm">
+              <div className="flex items-center gap-3 text-blue-600">
+                <RefreshCw size={24} className="animate-spin" />
+                <span className="text-xs font-bold uppercase tracking-widest">Loading Looker Studio...</span>
               </div>
             </div>
           )}
@@ -96,55 +96,45 @@ export default function LookerStudioEmbed({ compact = false }: Props) {
           />
         </div>
       ) : (
-        <div className="p-6">
+        <div className="p-6 md:p-8 bg-white">
           {/* Impact highlight banner */}
-          <div className="mb-6 p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent border border-blue-500/20 flex items-center gap-4">
-            <TrendingUp size={32} className="text-blue-400 shrink-0" />
+          <div className="mb-8 p-4 bg-blue-50 border border-blue-200 flex items-start sm:items-center gap-4">
+            <div className="p-2 bg-blue-100 text-blue-700">
+              <TrendingUp size={20} />
+            </div>
             <div>
-              <div className="text-2xl font-display font-black tracking-tighter text-white mb-0.5">
-                14% Faster Response Times
-              </div>
-              <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest">
-                Since deploying Hungarian Algorithm matching • Compared to manual coordination
-              </div>
+              <h4 className="text-xs font-bold text-blue-800 uppercase tracking-widest mb-1">Impact Velocity Up</h4>
+              <p className="text-sm font-medium text-blue-700 leading-relaxed">
+                Our matching algorithm has successfully reduced average emergency response times by 14% this month, enabling faster on-ground volunteer deployment across 12 high-risk zones.
+              </p>
             </div>
           </div>
 
-          {/* Metric grid */}
-          <div className={`grid gap-3 ${compact ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3'}`}>
-            {DEMO_METRICS.map((m) => (
-              <div
-                key={m.label}
-                className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all group"
+          <div className={`grid grid-cols-1 gap-4 ${compact ? 'sm:grid-cols-2 lg:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-3'}`}>
+            {DEMO_METRICS.map((metric, idx) => (
+              <div 
+                key={idx} 
+                className="p-6 bg-gray-50 border border-gray-200 hover:border-blue-300 hover:bg-white transition-colors group"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="text-[9px] font-display font-bold uppercase tracking-[0.2em] text-white/30 leading-tight">
-                    {m.label}
+                <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4">{metric.label}</div>
+                <div className="flex items-end justify-between">
+                  <div className="text-3xl font-bold tracking-tight text-gray-900 group-hover:text-blue-600 transition-colors">
+                    {metric.value}
                   </div>
-                  <div className={`text-[9px] font-mono font-black px-2 py-0.5 rounded-full border ${
-                    m.positive
-                      ? 'text-green-400 border-green-400/20 bg-green-400/5'
-                      : 'text-red-400 border-red-400/20 bg-red-400/5'
-                  }`}>
-                    {m.change}
+                  <div className="text-right">
+                    <div className={`text-xs font-bold ${metric.positive ? 'text-green-600' : 'text-red-600'}`}>
+                      {metric.change}
+                    </div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">{metric.detail}</div>
                   </div>
-                </div>
-                <div className="text-2xl font-display font-black tracking-tighter text-white group-hover:text-secondary-container transition-colors">
-                  {m.value}
-                </div>
-                <div className="text-[9px] font-mono text-white/20 uppercase tracking-widest mt-1">
-                  {m.detail}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* BigQuery ML note */}
-          <div className="mt-5 flex items-center gap-3 px-4 py-3 rounded-xl bg-purple-500/5 border border-purple-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse shrink-0" />
-            <span className="text-[10px] font-mono text-purple-400 uppercase tracking-widest">
-              BigQuery ML ARIMA_PLUS model retraining daily • Next forecast update in 6h
-            </span>
+          <div className="mt-8 pt-6 border-t border-gray-200 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-gray-400">
+            <span>Data synced: Real-time</span>
+            <span>Analytics Engine: BigQuery ML</span>
           </div>
         </div>
       )}

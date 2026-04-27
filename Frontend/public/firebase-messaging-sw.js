@@ -4,15 +4,16 @@
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
-// Initialize Firebase in the service worker
-// These values must match your firebase.ts config
+// Parse config from URL parameters passed during registration
+const urlParams = new URLSearchParams(location.search);
+
 firebase.initializeApp({
-  apiKey:            self.__FIREBASE_API_KEY__            || 'your-api-key',
-  authDomain:        self.__FIREBASE_AUTH_DOMAIN__        || 'seva-ai.firebaseapp.com',
-  projectId:         self.__FIREBASE_PROJECT_ID__         || 'seva-ai-prod',
-  storageBucket:     self.__FIREBASE_STORAGE_BUCKET__     || 'seva-ai-prod.appspot.com',
-  messagingSenderId: self.__FIREBASE_MESSAGING_SENDER_ID__|| 'your-sender-id',
-  appId:             self.__FIREBASE_APP_ID__             || 'your-app-id',
+  apiKey:            urlParams.get('apiKey')            || self.__FIREBASE_API_KEY__,
+  authDomain:        urlParams.get('authDomain')        || self.__FIREBASE_AUTH_DOMAIN__,
+  projectId:         urlParams.get('projectId')         || self.__FIREBASE_PROJECT_ID__,
+  storageBucket:     urlParams.get('storageBucket')     || self.__FIREBASE_STORAGE_BUCKET__,
+  messagingSenderId: urlParams.get('messagingSenderId') || self.__FIREBASE_MESSAGING_SENDER_ID__,
+  appId:             urlParams.get('appId')             || self.__FIREBASE_APP_ID__,
 });
 
 const messaging = firebase.messaging();

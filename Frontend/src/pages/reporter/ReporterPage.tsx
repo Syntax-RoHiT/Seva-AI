@@ -6,7 +6,6 @@ import {
   ChevronLeft, Send, Zap, Info, ShieldAlert, Target,
   Signal, Home, Cpu, Wifi, WifiOff, Globe
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -16,31 +15,31 @@ import { processReportEdge, getAICapabilities, extractTextFromImage, type EdgeAI
 import { parseImageReport } from '../../services/geminiService';
 
 const needTypes = [
-  { id: 'food',      label: 'Ration / Bhojan',  icon: <Utensils /> },
-  { id: 'medical',   label: 'Dawayi / Medical', icon: <HeartPulse /> },
-  { id: 'shelter',   label: 'Ashray (Shelter)', icon: <Tent /> },
-  { id: 'water',     label: 'Peene Ka Paani',   icon: <Droplets /> },
-  { id: 'rescue',    label: 'Rescue (Bachav)',  icon: <Search /> },
-  { id: 'education', label: 'Padhayi / Shiksha',icon: <GraduationCap /> },
+  { id: 'food',      label: 'Food Supply',  icon: <Utensils /> },
+  { id: 'medical',   label: 'Medical Aid',  icon: <HeartPulse /> },
+  { id: 'shelter',   label: 'Shelter',      icon: <Tent /> },
+  { id: 'water',     label: 'Clean Water',  icon: <Droplets /> },
+  { id: 'rescue',    label: 'Rescue',       icon: <Search /> },
+  { id: 'education', label: 'Education',    icon: <GraduationCap /> },
 ];
 
 type AIMode = 'EDGE_CHROME_AI' | 'EDGE_WEBGPU' | 'SERVER_FALLBACK' | 'CHECKING' | 'IDLE';
 
 function AIModeChip({ mode, inferenceMs }: { mode: AIMode; inferenceMs?: number }) {
   const config: Record<AIMode, { label: string; color: string; icon: React.ReactNode }> = {
-    EDGE_CHROME_AI:   { label: 'Gemma Nano (On-Device)', color: 'text-green-400 border-green-400/30 bg-green-400/5', icon: <Cpu size={10} /> },
-    EDGE_WEBGPU:      { label: 'Gemma 2B (WebGPU)',      color: 'text-cyan-400 border-cyan-400/30 bg-cyan-400/5',   icon: <Zap size={10} /> },
-    SERVER_FALLBACK:  { label: 'Gemini Flash (Server)',  color: 'text-amber-400 border-amber-400/30 bg-amber-400/5',icon: <Globe size={10} /> },
-    CHECKING:         { label: 'Detecting AI Mode...',   color: 'text-white/40 border-white/10 bg-white/5',         icon: <Signal size={10} className="animate-pulse" /> },
-    IDLE:             { label: 'AI Ready',               color: 'text-white/40 border-white/10 bg-white/5',         icon: <Cpu size={10} /> },
+    EDGE_CHROME_AI:   { label: 'Gemma Nano (On-Device)', color: 'text-green-700 border-green-200 bg-green-50', icon: <Cpu size={12} /> },
+    EDGE_WEBGPU:      { label: 'Gemma 2B (WebGPU)',      color: 'text-blue-700 border-blue-200 bg-blue-50',   icon: <Zap size={12} /> },
+    SERVER_FALLBACK:  { label: 'Gemini Flash (Server)',  color: 'text-amber-700 border-amber-200 bg-amber-50',icon: <Globe size={12} /> },
+    CHECKING:         { label: 'Detecting AI Mode...',   color: 'text-gray-500 border-gray-200 bg-gray-50',   icon: <Signal size={12} className="animate-pulse" /> },
+    IDLE:             { label: 'AI Ready',               color: 'text-gray-500 border-gray-200 bg-gray-50',   icon: <Cpu size={12} /> },
   };
   const c = config[mode];
   return (
-    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[9px] font-mono font-bold uppercase tracking-widest ${c.color}`}>
+    <div className={`inline-flex items-center gap-2 px-3 py-1 border text-xs font-semibold uppercase tracking-wider ${c.color}`}>
       {c.icon}
       {c.label}
       {inferenceMs && mode !== 'IDLE' && mode !== 'CHECKING' && (
-        <span className="opacity-60">• {inferenceMs}ms</span>
+        <span className="opacity-60 font-mono">• {inferenceMs}ms</span>
       )}
     </div>
   );
@@ -97,13 +96,11 @@ export default function ReporterPage() {
       const base64 = ev.target?.result as string;
       setImagePreview(base64);
       try {
-        // Try edge-first OCR
         const ocrText = await extractTextFromImage(base64);
         let parsed: EdgeAIResult;
         if (ocrText !== '[IMAGE_OCR_REQUIRED]') {
           parsed = await processReportEdge(ocrText, setAIStatusMsg);
         } else {
-          // Fall back to server Gemini vision
           const serverParsed = await parseImageReport(base64, file.type);
           parsed = {
             needType: serverParsed.needType,
@@ -115,7 +112,6 @@ export default function ReporterPage() {
             processingMs: 0,
           };
         }
-        // Auto-fill form
         setDetails(parsed.summary);
         if (parsed.needType[0]) setSelectedType(parsed.needType[0].toLowerCase());
         setSeverity(Math.min(5, Math.max(1, parsed.severity)));
@@ -145,7 +141,6 @@ export default function ReporterPage() {
     );
   };
 
-  // ── Submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!details.trim() && !selectedType) return;
     setLoading(true);
@@ -169,7 +164,7 @@ export default function ReporterPage() {
         location: location || { lat: 26.9124, lng: 75.7873 },
         locationDescription: location
           ? `${location.lat.toFixed(4)}°N, ${location.lng.toFixed(4)}°E`
-          : 'Jaipur (Default)',
+          : 'Unknown Location',
         reporterId:   user?.uid || 'anonymous',
         reporterName: user?.displayName || 'Guest Reporter',
         needType:     parsed.needType,
@@ -196,73 +191,66 @@ export default function ReporterPage() {
     }
   };
 
-  // ── Success Screen ──────────────────────────────────────────────────────────
   if (submitted) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-6 font-sans">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="max-w-md w-full glass-panel p-10 rounded-[2.5rem] border-secondary-container/20 text-center relative overflow-hidden"
-        >
-          <div className="absolute top-0 inset-x-0 h-1 bg-secondary-container" />
-          <div className="w-20 h-20 rounded-full bg-secondary-container flex items-center justify-center mx-auto mb-8 shadow-[0_0_40px_rgba(255,255,255,0.2)]">
-            <CheckCircle2 color="black" size={40} />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 font-sans">
+        <div className="max-w-md w-full bg-white p-10 border border-gray-200 text-center relative shadow-sm">
+          <div className="absolute top-0 inset-x-0 h-1 bg-green-500" />
+          <div className="w-16 h-16 bg-green-50 flex items-center justify-center mx-auto mb-8 border border-green-200">
+            <CheckCircle2 className="text-green-600" size={32} />
           </div>
-          <h2 className="text-4xl font-display font-black uppercase tracking-tighter mb-3 text-white">
-            Suchna Bhej Di Gayi
+          <h2 className="text-2xl font-bold uppercase tracking-wide mb-3 text-gray-900">
+            Report Submitted
           </h2>
           <div className="mb-6">
             <AIModeChip mode={aiMode} inferenceMs={lastInferenceMs} />
           </div>
-          <p className="text-[11px] font-mono text-white/40 uppercase tracking-widest mb-10 leading-relaxed font-bold">
-            Processed {aiMode === 'EDGE_CHROME_AI' || aiMode === 'EDGE_WEBGPU' ? 'on-device — no data left this phone' : 'via cloud'}. Urgency score computed. Swarm Assembler notified.
+          <p className="text-sm text-gray-500 mb-10 leading-relaxed font-medium">
+            Processed {aiMode === 'EDGE_CHROME_AI' || aiMode === 'EDGE_WEBGPU' ? 'on-device — no data left this phone' : 'via cloud'}. Urgency score computed. Volunteers will be notified shortly.
           </p>
           <div className="space-y-3">
             <button
               onClick={() => { setSubmitted(false); setImagePreview(null); setImageParsed(false); setDetails(''); }}
-              className="w-full py-5 rounded-2xl bg-white text-black font-display font-black uppercase text-[11px] tracking-[0.2em] hover:bg-secondary-container transition-all active:scale-95"
+              className="w-full py-4 bg-blue-600 text-white font-semibold uppercase text-xs tracking-wider hover:bg-blue-700 transition-colors"
             >
-              Report New Signal
+              Submit Another Report
             </button>
             <button
               onClick={() => navigate('/')}
-              className="w-full py-4 rounded-xl border border-white/10 font-display text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 border border-gray-300 font-semibold text-xs uppercase tracking-wider text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
             >
-              <Home size={14} />
+              <Home size={16} />
               Return to Home
             </button>
           </div>
-        </motion.div>
+        </div>
       </div>
     );
   }
 
-  // ── Main Form ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-black pb-20 font-sans text-white">
+    <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-900">
       {/* Header */}
-      <div className="sticky top-0 z-50 glass-panel border-x-0 border-t-0 p-4 rounded-none border-white/5">
+      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 p-4 shadow-sm">
         <div className="container max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/')} className="text-white/40 hover:text-white transition-colors p-2 rounded-lg">
+            <button onClick={() => navigate('/')} className="text-gray-500 hover:text-gray-900 transition-colors p-2">
               <ChevronLeft size={24} />
             </button>
             <div>
-              <div className="text-[10px] font-display font-bold uppercase tracking-[0.2em] text-secondary-container mb-0.5">
-                Emergency Suchna Vyavastha
+              <div className="text-xs font-semibold uppercase tracking-wider text-blue-600 mb-0.5">
+                Emergency Reporting
               </div>
-              <h1 className="text-xl font-display font-black uppercase tracking-tighter">
-                Aapda Report Protocol
+              <h1 className="text-xl font-bold tracking-tight">
+                Field Worker Input
               </h1>
             </div>
           </div>
-          {/* Connectivity + AI mode */}
-          <div className="hidden md:flex flex-col items-end gap-1">
+          <div className="hidden md:flex flex-col items-end gap-2">
             <div className="flex items-center gap-2">
               {isOffline
-                ? <><WifiOff size={10} className="text-amber-400" /><span className="text-[9px] font-mono text-amber-400 uppercase">Offline</span></>
-                : <><Wifi size={10} className="text-green-400" /><span className="text-[9px] font-mono text-green-400 uppercase">Online</span></>
+                ? <><WifiOff size={14} className="text-red-500" /><span className="text-xs font-semibold text-red-500 uppercase">Offline</span></>
+                : <><Wifi size={14} className="text-green-500" /><span className="text-xs font-semibold text-green-500 uppercase">Online</span></>
               }
             </div>
             <AIModeChip mode={aiMode} inferenceMs={lastInferenceMs} />
@@ -270,54 +258,50 @@ export default function ReporterPage() {
         </div>
       </div>
 
-      <div className="container max-w-2xl mx-auto px-6 mt-8 mb-20 space-y-12">
+      <div className="container max-w-2xl mx-auto px-6 mt-8 mb-20 space-y-10">
 
         {/* AI Status Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-panel p-4 rounded-2xl border border-white/5 flex items-center gap-4"
-        >
-          <div className="p-2 rounded-xl bg-secondary-container/10 text-secondary-container shrink-0">
-            <Cpu size={18} />
+        <div className="bg-white p-4 border border-gray-200 flex items-center gap-4 shadow-sm">
+          <div className="p-2 bg-blue-50 text-blue-600 border border-blue-100">
+            <Cpu size={20} />
           </div>
-          <div className="min-w-0">
-            <div className="text-[9px] font-display font-bold uppercase tracking-[0.2em] text-secondary-container mb-0.5">
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-semibold uppercase tracking-wider text-blue-600 mb-1">
               AI Processing Mode
             </div>
-            <div className="text-[10px] font-mono text-white/50 truncate">{aiStatusMsg}</div>
+            <div className="text-sm text-gray-500 truncate">{aiStatusMsg}</div>
           </div>
-          <div className="shrink-0 ml-auto">
+          <div className="shrink-0 hidden sm:block">
             <AIModeChip mode={aiMode} />
           </div>
-        </motion.div>
+        </div>
 
         {/* Step 1: Need Type */}
         <section>
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-secondary-container/10 border border-secondary-container/20 flex items-center justify-center text-secondary-container">
+            <div className="w-8 h-8 bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
               <Zap size={16} />
             </div>
-            <h3 className="font-display text-lg font-black uppercase tracking-tighter">I. Sanket Ka Prakar</h3>
+            <h3 className="text-lg font-bold uppercase tracking-wide">Select Primary Need</h3>
           </div>
           <Grid container spacing={2}>
             {needTypes.map((type) => (
               <Grid item xs={6} sm={4} key={type.id}>
                 <button
                   onClick={() => setSelectedType(type.id)}
-                  className={`w-full p-6 rounded-3xl border transition-all duration-300 text-center group ${
+                  className={`w-full p-4 border transition-colors text-center ${
                     selectedType === type.id
-                      ? 'glass-panel border-secondary-container/50 bg-secondary-container/5'
-                      : 'bg-white/5 border-white/5 hover:bg-white/[0.08] hover:border-white/10'
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                   }`}
                 >
-                  <div className={`mb-3 mx-auto w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                    selectedType === type.id ? 'bg-secondary-container text-black' : 'bg-white/5 text-white/30 group-hover:text-white/60'
+                  <div className={`mb-3 mx-auto w-10 h-10 flex items-center justify-center transition-colors ${
+                    selectedType === type.id ? 'text-blue-600' : 'text-gray-400'
                   }`}>
-                    {React.isValidElement(type.icon) && React.cloneElement(type.icon as React.ReactElement<{ size: number }>, { size: 22 })}
+                    {React.isValidElement(type.icon) && React.cloneElement(type.icon as React.ReactElement<{ size: number }>, { size: 24 })}
                   </div>
-                  <div className={`text-[10px] font-display font-black uppercase tracking-[0.15em] ${
-                    selectedType === type.id ? 'text-white' : 'text-white/20 group-hover:text-white/40'
+                  <div className={`text-xs font-semibold uppercase tracking-wider ${
+                    selectedType === type.id ? 'text-blue-700' : 'text-gray-500'
                   }`}>
                     {type.label}
                   </div>
@@ -327,13 +311,13 @@ export default function ReporterPage() {
           </Grid>
         </section>
 
-        {/* Step 2: Evidence — Image OCR + Voice + Location */}
+        {/* Step 2: Evidence */}
         <section>
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40">
+            <div className="w-8 h-8 bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600">
               <Camera size={16} />
             </div>
-            <h3 className="font-display text-lg font-black uppercase tracking-tighter">II. As-paas Ke Saboot</h3>
+            <h3 className="text-lg font-bold uppercase tracking-wide">Attach Evidence (Optional)</h3>
           </div>
 
           <input
@@ -346,105 +330,93 @@ export default function ReporterPage() {
           />
 
           <div className="grid grid-cols-3 gap-4">
-            {/* Camera → Edge AI OCR */}
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={imageLoading}
-              className="aspect-square glass-panel p-4 rounded-3xl border border-secondary-container/30 hover:border-secondary-container/60 transition-all group flex flex-col items-center justify-center gap-3 relative overflow-hidden"
+              className="aspect-square bg-white border border-gray-200 hover:border-blue-300 transition-colors flex flex-col items-center justify-center gap-2 relative overflow-hidden"
             >
               {imageLoading ? (
                 <>
-                  <Cpu size={24} className="text-secondary-container animate-pulse" />
-                  <span className="text-[9px] font-display font-bold uppercase tracking-widest text-secondary-container">AI Parsing...</span>
+                  <Cpu size={24} className="text-blue-600 animate-pulse" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-blue-600">Parsing...</span>
                 </>
               ) : imageParsed ? (
                 <>
                   <div className="absolute inset-0">
-                    <img src={imagePreview!} className="w-full h-full object-cover opacity-25" />
+                    <img src={imagePreview!} className="w-full h-full object-cover opacity-30" />
                   </div>
-                  <CheckCircle2 size={24} className="relative text-secondary-container" />
-                  <span className="relative text-[9px] font-display font-bold uppercase tracking-widest text-secondary-container">✓ OCR Done</span>
+                  <CheckCircle2 size={24} className="relative text-green-600" />
+                  <span className="relative text-xs font-semibold uppercase tracking-wider text-green-700">OCR Done</span>
                 </>
               ) : (
                 <>
-                  <Camera size={24} className="text-white/30 group-hover:text-secondary-container transition-colors" />
-                  <span className="text-[9px] font-display font-bold uppercase tracking-widest text-white/20 group-hover:text-white/50">Photo + OCR</span>
+                  <Camera size={24} className="text-gray-400" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Photo / OCR</span>
                 </>
               )}
             </button>
 
-            {/* Voice Note */}
-            <button className="aspect-square glass-panel p-4 rounded-3xl border border-white/5 hover:border-white/20 transition-all group flex flex-col items-center justify-center gap-3">
-              <Mic size={24} className="text-white/20 group-hover:text-secondary-container transition-colors" />
-              <span className="text-[9px] font-display font-bold uppercase tracking-widest text-white/10 group-hover:text-white/40">Voice Note</span>
+            <button className="aspect-square bg-white border border-gray-200 hover:border-blue-300 transition-colors flex flex-col items-center justify-center gap-2">
+              <Mic size={24} className="text-gray-400" />
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Voice Note</span>
             </button>
 
-            {/* GPS Lock */}
             <button
               onClick={handleLocationLock}
               disabled={locationLoading}
-              className={`aspect-square glass-panel p-4 rounded-3xl border transition-all group flex flex-col items-center justify-center gap-3 ${
-                location ? 'border-green-500/30 bg-green-500/5' : 'border-white/5 hover:border-white/20'
+              className={`aspect-square border transition-colors flex flex-col items-center justify-center gap-2 ${
+                location ? 'border-green-300 bg-green-50' : 'bg-white border-gray-200 hover:border-blue-300'
               }`}
             >
-              <MapPin size={24} className={location ? 'text-green-400' : 'text-white/20 group-hover:text-secondary-container transition-colors'} />
-              <span className={`text-[9px] font-display font-bold uppercase tracking-widest ${
-                location ? 'text-green-400' : 'text-white/10 group-hover:text-white/40'
+              <MapPin size={24} className={location ? 'text-green-600' : 'text-gray-400'} />
+              <span className={`text-[10px] font-semibold uppercase tracking-wider ${
+                location ? 'text-green-700' : 'text-gray-500'
               }`}>
-                {locationLoading ? 'Locking...' : location ? '✓ GPS Locked' : 'Location Lock'}
+                {locationLoading ? 'Locking...' : location ? 'GPS Locked' : 'Location'}
               </span>
             </button>
           </div>
 
-          {/* OCR Success Banner */}
-          <AnimatePresence>
-            {imageParsed && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-4 flex items-center gap-3 px-5 py-3 rounded-2xl border border-secondary-container/20 bg-secondary-container/5 overflow-hidden"
-              >
-                <div className="w-2 h-2 rounded-full bg-secondary-container animate-pulse" />
-                <span className="text-[10px] font-mono uppercase tracking-widest text-secondary-container font-bold">
-                  Gemma OCR: Form fields auto-filled from photo
-                </span>
-                <AIModeChip mode={aiMode} inferenceMs={lastInferenceMs} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {imageParsed && (
+            <div className="mt-4 flex items-center gap-3 px-4 py-3 border border-blue-200 bg-blue-50">
+              <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+                Form auto-filled via Edge AI OCR
+              </span>
+            </div>
+          )}
         </section>
 
-        {/* Step 3: Severity Slider */}
+        {/* Step 3: Severity */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40">
+              <div className="w-8 h-8 bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600">
                 <ShieldAlert size={16} />
               </div>
-              <h3 className="font-display text-lg font-black uppercase tracking-tighter">III. Khatre Ka Anuman</h3>
+              <h3 className="text-lg font-bold uppercase tracking-wide">Severity Level</h3>
             </div>
-            <div className={`px-4 py-1.5 rounded-full text-[10px] font-display font-black uppercase tracking-widest border transition-colors ${
-              severity >= 4 ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-secondary-container/10 border-secondary-container/20 text-secondary-container'
+            <div className={`px-3 py-1 text-xs font-bold uppercase tracking-wider border ${
+              severity >= 4 ? 'bg-red-50 border-red-200 text-red-600' : 'bg-blue-50 border-blue-200 text-blue-600'
             }`}>
               LEVEL {severity} / 5
             </div>
           </div>
-          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
-            <div className="flex items-center gap-3 mb-6 text-white/30">
-              <Info size={14} />
-              <span className="text-[10px] font-mono tracking-widest uppercase font-bold">
-                1: Minimum Sync Required • 5: Direct Structural Threat
+          <div className="bg-white p-8 border border-gray-200">
+            <div className="flex items-center gap-2 mb-6 text-gray-500">
+              <Info size={16} />
+              <span className="text-xs font-semibold tracking-wider uppercase">
+                1: Minimal Impact • 5: Life-Threatening Emergency
               </span>
             </div>
             <Slider
               value={severity}
               onChange={(_, v) => setSeverity(v as number)}
               min={1} max={5} step={1} marks
-              className="!text-secondary-container"
               sx={{
-                '& .MuiSlider-thumb': { width: 28, height: 28, backgroundColor: '#fff', border: '4px solid currentColor', '&:before': { display: 'none' } },
-                '& .MuiSlider-rail': { opacity: 0.1 },
+                color: severity >= 4 ? '#ea4335' : '#1a73e8',
+                '& .MuiSlider-thumb': { borderRadius: 0, width: 24, height: 24, backgroundColor: 'currentColor', border: '2px solid white' },
+                '& .MuiSlider-rail': { opacity: 0.2 },
               }}
             />
           </div>
@@ -453,34 +425,34 @@ export default function ReporterPage() {
         {/* Step 4: Description */}
         <section>
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40">
+            <div className="w-8 h-8 bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600">
               <Target size={16} />
             </div>
-            <h3 className="font-display text-lg font-black uppercase tracking-tighter">IV. Sanket Ki Jankari</h3>
+            <h3 className="text-lg font-bold uppercase tracking-wide">Report Details</h3>
           </div>
           <div className="space-y-4">
             <div className="relative group">
-              <div className="absolute top-4 left-6 text-[10px] font-display font-black uppercase tracking-[0.2em] text-white/20 group-focus-within:text-secondary-container transition-colors">
-                Ghatna Ka Vivran
+              <div className="absolute top-3 left-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 group-focus-within:text-blue-600 transition-colors">
+                Incident Description
               </div>
               <textarea
-                rows={5}
-                placeholder="Yahan batayein ki kya hua hai... (Hindi, English, or any language)"
+                rows={4}
+                placeholder="Describe what happened..."
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
-                className="w-full glass-panel bg-white/5 border border-white/5 p-8 pt-14 rounded-[2.5rem] text-sm text-white/80 placeholder:text-white/10 focus:border-secondary-container/40 focus:outline-none transition-all resize-none font-mono tracking-tight font-bold"
+                className="w-full bg-white border border-gray-200 p-4 pt-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all resize-none font-medium"
               />
             </div>
             <div className="relative group">
-              <div className="absolute top-4 left-6 text-[10px] font-display font-black uppercase tracking-[0.2em] text-white/20 group-focus-within:text-white/40 transition-colors">
-                Prabhavit Log (Affected Count)
+              <div className="absolute top-3 left-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 group-focus-within:text-blue-600 transition-colors">
+                Estimated People Affected
               </div>
               <input
                 type="number"
-                placeholder="Estimated population involved..."
+                placeholder="e.g., 50"
                 value={affectedCount}
                 onChange={(e) => setAffectedCount(e.target.value)}
-                className="w-full glass-panel bg-white/5 border border-white/5 px-8 pt-14 pb-6 rounded-[2.5rem] text-sm text-white focus:border-white/20 focus:outline-none transition-all font-mono font-bold tracking-tight"
+                className="w-full bg-white border border-gray-200 px-4 pt-10 pb-4 text-sm text-gray-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all font-medium"
               />
             </div>
           </div>
@@ -490,16 +462,16 @@ export default function ReporterPage() {
         <button
           disabled={loading}
           onClick={handleSubmit}
-          className={`w-full py-6 rounded-3xl font-display text-xs font-black uppercase tracking-[0.3em] flex items-center justify-center gap-4 transition-all active:scale-[0.98] ${
+          className={`w-full py-5 text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-3 transition-colors ${
             loading
-              ? 'bg-white/5 text-white/20 border border-white/5 cursor-not-allowed'
-              : 'bg-white text-black hover:bg-secondary-container shadow-[0_0_50px_rgba(255,255,255,0.1)]'
+              ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
           }`}
         >
           {loading ? (
-            <><Signal className="animate-pulse" size={20} /> {aiStatusMsg}</>
+            <><Signal className="animate-pulse" size={18} /> Processing...</>
           ) : (
-            <><span>Emergency Suchna Bhejein</span><Send size={20} /></>
+            <><span>Submit Emergency Report</span><Send size={18} /></>
           )}
         </button>
       </div>

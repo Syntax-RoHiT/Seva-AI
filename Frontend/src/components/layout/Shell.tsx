@@ -1,13 +1,9 @@
 import React from 'react';
 import { 
-  Box, 
   IconButton, 
-  Typography, 
   Avatar, 
   Badge, 
   Drawer, 
-  alpha,
-  Stack,
 } from '@mui/material';
 import { 
   Menu as MenuIcon, 
@@ -21,14 +17,11 @@ import {
   ShieldCheck,
   Settings, 
   LogOut,
-  ChevronRight,
   TrendingUp,
   MessageSquare,
   AlertTriangle,
   Server,
   Globe,
-  Sparkles,
-  Zap,
   Activity,
   Send,
   Loader2,
@@ -50,8 +43,6 @@ interface ShellProps {
   role: UserRole;
 }
 
-const SIDEBAR_WIDTH = 260;
-
 export default function Shell({ children, role }: ShellProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,7 +51,7 @@ export default function Shell({ children, role }: ShellProps) {
   const [aiDrawerOpen, setAiDrawerOpen] = React.useState(false);
   const [chatMessage, setChatMessage] = React.useState('');
   const [chatHistory, setChatHistory] = React.useState<Message[]>([
-    { role: 'model', content: "Namaste! Seva AI Sahayak online hai. Main aaj aapki sahayta kaise kar sakta hoon?" }
+    { role: 'model', content: "Hello! Seva AI Assistant online. How can I assist you today?" }
   ]);
   const [isTyping, setIsTyping] = React.useState(false);
   const chatEndRef = React.useRef<HTMLDivElement>(null);
@@ -84,7 +75,6 @@ export default function Shell({ children, role }: ShellProps) {
     setIsTyping(true);
 
     try {
-      // Convert history to Gemini format
       const geminiHistory = chatHistory.map(m => ({
         role: m.role,
         parts: [{ text: m.content }]
@@ -94,7 +84,7 @@ export default function Shell({ children, role }: ShellProps) {
       setChatHistory(prev => [...prev, { role: 'model', content: response }]);
     } catch (error) {
       console.error("AI Assistant Error:", error);
-      setChatHistory(prev => [...prev, { role: 'model', content: "Error establishing tactical uplink. Please retry." }]);
+      setChatHistory(prev => [...prev, { role: 'model', content: "Error establishing connection. Please retry." }]);
     } finally {
       setIsTyping(false);
     }
@@ -102,7 +92,7 @@ export default function Shell({ children, role }: ShellProps) {
 
   const menuItems = React.useMemo(() => {
     const common = [
-      { text: 'Niyantran Kendra', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
+      { text: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
       { text: 'Public Portal', icon: <Globe size={20} />, path: '/' },
       { text: 'Settings', icon: <Settings size={20} />, path: '/settings' },
     ];
@@ -110,39 +100,39 @@ export default function Shell({ children, role }: ShellProps) {
     switch (role) {
       case 'NGO_ADMIN':
         return [
-          { text: 'Niyantran Kendra', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-          { text: 'Aapda Map', icon: <MapIcon size={20} />, path: '/heatmap' },
-          { text: 'Aapda Signals', icon: <AlertTriangle size={20} />, path: '/cases' },
-          { text: 'Seva Sathis', icon: <Users size={20} />, path: '/volunteers' },
-          { text: 'Team Samuh', icon: <UsersRound size={20} />, path: '/teams' },
-          { text: 'Pradarshan', icon: <TrendingUp size={20} />, path: '/analytics' },
-          { text: 'Sanchalan Config', icon: <Settings size={20} />, path: '/settings' },
+          { text: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
+          { text: 'Threat Map', icon: <MapIcon size={20} />, path: '/heatmap' },
+          { text: 'Alerts', icon: <AlertTriangle size={20} />, path: '/cases' },
+          { text: 'Volunteers', icon: <Users size={20} />, path: '/volunteers' },
+          { text: 'Teams', icon: <UsersRound size={20} />, path: '/teams' },
+          { text: 'Analytics', icon: <TrendingUp size={20} />, path: '/analytics' },
+          { text: 'Settings', icon: <Settings size={20} />, path: '/settings' },
         ];
       case 'VOLUNTEER':
         return [
-          { text: 'Seva Deck', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-          { text: 'Active Abhiyan', icon: <ShieldAlert size={20} />, path: '/tasks' },
-          { text: 'Samagri List', icon: <Server size={20} />, path: '/inventory' },
+          { text: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
+          { text: 'Active Tasks', icon: <ShieldAlert size={20} />, path: '/tasks' },
+          { text: 'Inventory', icon: <Server size={20} />, path: '/inventory' },
           ...common,
         ];
       case 'GOVERNMENT':
         return [
-          { text: 'Rashtriya Oversight', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-          { text: 'Desh Ka Heatmap', icon: <Globe size={20} />, path: '/heatmap' },
-          { text: 'Niti Kendra', icon: <Settings size={20} />, path: '/policy' },
-          { text: 'Niti Review', icon: <TrendingUp size={20} />, path: '/reports' },
+          { text: 'National Overview', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
+          { text: 'Global Heatmap', icon: <Globe size={20} />, path: '/heatmap' },
+          { text: 'Policy Center', icon: <Settings size={20} />, path: '/policy' },
+          { text: 'Review Reports', icon: <TrendingUp size={20} />, path: '/reports' },
           ...common,
         ];
       case 'REPORTER':
         return [
-          { text: 'Suchna Terminal', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-          { text: 'Active Reports', icon: <AlertTriangle size={20} />, path: '/my-reports' },
+          { text: 'Report Center', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
+          { text: 'My Reports', icon: <AlertTriangle size={20} />, path: '/my-reports' },
           ...common,
         ];
       case 'SUPER_ADMIN':
         return [
-          { text: 'Mukhya Control', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-          { text: 'Sadasya Mesh', icon: <Users size={20} />, path: '/users' },
+          { text: 'Main Control', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
+          { text: 'User Network', icon: <Users size={20} />, path: '/users' },
           { text: 'System Logs', icon: <Activity size={20} />, path: '/logs' },
           ...common,
         ];
@@ -157,16 +147,16 @@ export default function Shell({ children, role }: ShellProps) {
   };
 
   const Sidebar = () => (
-    <div className="h-full flex flex-col bg-[#050505] border-r border-white/5 pt-8">
+    <div className="h-full flex flex-col bg-gray-50 border-r border-gray-200 pt-8">
       <div className="px-8 mb-10 flex items-center gap-3">
-        <div className="w-8 h-8 bg-secondary-container rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(0,186,199,0.3)]">
-          <ShieldCheck size={18} className="text-black" />
+        <div className="w-8 h-8 bg-blue-600 text-white flex items-center justify-center shadow-sm">
+          <ShieldCheck size={18} />
         </div>
-        <div className="font-display font-black uppercase tracking-tighter text-xl text-white">Seva AI</div>
+        <div className="font-bold tracking-tight text-xl text-gray-900">SEVA AI</div>
       </div>
 
-      <nav className="flex-1 px-4 space-y-2">
-        <div className="px-4 mb-4 text-[10px] font-display font-bold uppercase tracking-[0.2em] text-white/20">Sanchalan Control</div>
+      <nav className="flex-1 px-4 space-y-1">
+        <div className="px-4 mb-4 text-xs font-bold uppercase tracking-widest text-gray-500">Navigation</div>
         {menuItems.map((item) => {
           const active = location.pathname === item.path;
           return (
@@ -176,45 +166,44 @@ export default function Shell({ children, role }: ShellProps) {
                 navigate(item.path);
                 setMobileOpen(false);
               }}
-              className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-display text-[11px] tracking-widest font-bold uppercase transition-all group ${
+              className={`w-full flex items-center gap-4 px-4 py-3 font-semibold text-xs tracking-wider uppercase transition-colors group ${
                 active 
-                  ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.1)]' 
-                  : 'text-white/40 hover:text-white hover:bg-white/5'
+                  ? 'bg-white text-blue-600 border border-gray-200 shadow-sm' 
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-white'
               }`}
             >
-              <span className={`${active ? 'text-black' : 'text-current opacity-40 group-hover:opacity-100'}`}>
+              <span className={`${active ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600'}`}>
                 {item.icon}
               </span>
               {item.text}
-              {active && <motion.div layoutId="nav-dot" className="ml-auto w-1.5 h-1.5 rounded-full bg-black" />}
             </button>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-white/5">
-        <div className="p-4 rounded-xl bg-white/5 border border-white/5 mb-4">
-          <div className="flex items-center gap-3 mb-3">
-            <Activity size={14} className="text-secondary-container" />
-            <span className="text-[10px] font-display font-bold uppercase tracking-widest text-secondary-container">System Live</span>
+      <div className="p-4 border-t border-gray-200">
+        <div className="p-4 bg-white border border-gray-200 shadow-sm mb-4">
+          <div className="flex items-center gap-3 mb-2">
+            <Activity size={14} className="text-green-600" />
+            <span className="text-xs font-bold uppercase tracking-widest text-gray-900">System Status</span>
           </div>
-          <div className="text-[10px] text-white/40 font-mono text-[9px]">LATENCY: 14MS</div>
+          <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Online • Latency: 14ms</div>
         </div>
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center gap-4 px-4 py-3 rounded-xl font-display text-[11px] tracking-widest font-bold uppercase text-red-500/60 hover:text-red-500 hover:bg-red-500/5 transition-all"
+          className="w-full flex items-center gap-4 px-4 py-3 font-bold text-xs tracking-widest uppercase text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors"
         >
-          <LogOut size={20} />
-          Terminate
+          <LogOut size={18} />
+          Sign Out
         </button>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#000000] text-on-background flex overflow-hidden font-sans">
+    <div className="h-screen w-screen bg-gray-100 text-gray-900 flex overflow-hidden font-sans selection:bg-blue-100 selection:text-blue-900">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-[260px] flex-shrink-0">
+      <aside className="hidden lg:block w-[260px] flex-shrink-0 bg-white">
         <Sidebar />
       </aside>
 
@@ -229,20 +218,20 @@ export default function Shell({ children, role }: ShellProps) {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 relative">
-        <header className="h-20 border-b border-white/5 flex items-center justify-between px-6 md:px-10 z-30 bg-[#000000]/80 backdrop-blur-xl">
+        <header className="h-20 border-b border-gray-200 flex items-center justify-between px-6 md:px-10 z-30 bg-white shadow-sm">
           <div className="flex items-center gap-4">
             <IconButton 
               onClick={() => setMobileOpen(true)}
-              className="lg:!hidden !text-white"
+              className="lg:!hidden !text-gray-900"
             >
               <MenuIcon />
             </IconButton>
-            <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/5">
-              <Search size={16} className="text-white/30" />
+            <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-gray-50 border border-gray-200">
+              <Search size={16} className="text-gray-400" />
               <input 
                 type="text" 
-                placeholder="SYSTEM KHOJEIN..." 
-                className="bg-transparent border-none outline-none text-[11px] font-display tracking-widest font-bold uppercase w-48 text-white placeholder:text-white/20"
+                placeholder="Search..." 
+                className="bg-transparent border-none outline-none text-xs font-semibold tracking-wider w-48 text-gray-900 placeholder:text-gray-400"
               />
             </div>
           </div>
@@ -250,31 +239,30 @@ export default function Shell({ children, role }: ShellProps) {
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-4 mr-4">
               <Badge variant="dot" color="error">
-                <Bell size={20} className="text-white/40 hover:text-white cursor-pointer transition-colors" />
+                <Bell size={20} className="text-gray-500 hover:text-blue-600 cursor-pointer transition-colors" />
               </Badge>
               <MessageSquare 
                 size={20} 
-                className={`cursor-pointer transition-colors ${aiDrawerOpen ? 'text-secondary-container' : 'text-white/40 hover:text-white'}`} 
+                className={`cursor-pointer transition-colors ${aiDrawerOpen ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'}`} 
                 onClick={() => setAiDrawerOpen(!aiDrawerOpen)}
               />
             </div>
             
-            <div className="flex items-center gap-4 pl-4 border-l border-white/10">
+            <div className="flex items-center gap-4 pl-4 border-l border-gray-200">
               <div className="text-right hidden sm:block">
-                <div className="text-[11px] font-display font-black uppercase tracking-tighter">{user?.displayName || 'OPERATOR'}</div>
-                <div className="text-[9px] font-display font-bold uppercase tracking-widest text-white/30">{role.replace('_', ' ')}</div>
+                <div className="text-xs font-bold uppercase tracking-tight text-gray-900">{user?.displayName || 'Operator'}</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{role.replace('_', ' ')}</div>
               </div>
               <Avatar 
                 src={user?.photoURL || ""} 
-                className="!w-9 !h-9 !rounded-lg border border-white/10"
+                className="!w-10 !h-10 !rounded-none border border-gray-200"
               />
             </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto relative scrollbar-hide">
-          <div className="absolute inset-0 grid-pattern opacity-10 pointer-events-none"></div>
-          <div className="p-6 md:p-10 relative z-10">
+        <main className="flex-1 overflow-y-auto relative scrollbar-hide bg-gray-50 flex flex-col">
+          <div className="p-6 md:p-10 relative z-10 flex-1 flex flex-col">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
@@ -282,6 +270,7 @@ export default function Shell({ children, role }: ShellProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
+                className="h-full flex flex-col flex-1"
               >
                 {children}
               </motion.div>
@@ -297,19 +286,19 @@ export default function Shell({ children, role }: ShellProps) {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="absolute top-0 right-0 bottom-0 w-full sm:w-[400px] bg-[#0A0A0A] border-l border-white/10 z-50 flex flex-col"
+              className="absolute top-0 right-0 bottom-0 w-full sm:w-[400px] bg-white border-l border-gray-200 z-50 flex flex-col shadow-xl"
             >
-              <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-gray-50">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-secondary-container/10 rounded-lg text-secondary-container">
+                  <div className="p-2 bg-blue-100 text-blue-600">
                     <ShieldCheck size={18} />
                   </div>
                   <div>
-                    <div className="text-[11px] font-display font-black uppercase tracking-widest">Seva AI Sahayak</div>
-                    <div className="text-[8px] font-mono text-white/30 uppercase">Suraksha Uplink Active</div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-gray-900">Seva AI Assistant</div>
+                    <div className="text-[10px] font-bold text-gray-500 uppercase">Secure Connection</div>
                   </div>
                 </div>
-                <IconButton onClick={() => setAiDrawerOpen(false)} className="!text-white/40 hover:!text-white">
+                <IconButton onClick={() => setAiDrawerOpen(false)} className="!text-gray-400 hover:!text-gray-900">
                   <CloseIcon size={20} />
                 </IconButton>
               </div>
@@ -317,10 +306,10 @@ export default function Shell({ children, role }: ShellProps) {
               <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
                 {chatHistory.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] p-4 rounded-2xl text-[12px] font-sans leading-relaxed ${
+                    <div className={`max-w-[85%] p-4 text-xs font-medium leading-relaxed ${
                       msg.role === 'user' 
-                        ? 'bg-white text-black' 
-                        : 'bg-white/5 text-white/80 border border-white/5'
+                        ? 'bg-blue-600 text-white rounded-l-xl rounded-br-xl' 
+                        : 'bg-gray-100 text-gray-800 border border-gray-200 rounded-r-xl rounded-bl-xl'
                     }`}>
                       {msg.content}
                     </div>
@@ -328,31 +317,31 @@ export default function Shell({ children, role }: ShellProps) {
                 ))}
                 {isTyping && (
                   <div className="flex justify-start">
-                    <div className="bg-white/5 p-4 rounded-2xl flex items-center gap-2">
-                      <Loader2 size={14} className="animate-spin text-white/40" />
-                      <span className="text-[10px] font-mono uppercase tracking-widest text-white/40">Vishleshan (AI)...</span>
+                    <div className="bg-gray-100 border border-gray-200 p-4 rounded-r-xl rounded-bl-xl flex items-center gap-2">
+                      <Loader2 size={14} className="animate-spin text-gray-500" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Thinking...</span>
                     </div>
                   </div>
                 )}
                 <div ref={chatEndRef} />
               </div>
 
-              <div className="p-6 bg-[#050505] border-t border-white/5">
+              <div className="p-6 bg-gray-50 border-t border-gray-200">
                 <div className="relative">
                   <input
                     type="text"
                     value={chatMessage}
                     onChange={(e) => setChatMessage(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-                    placeholder="SANDESH BHEJEIN..."
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 pr-12 text-[11px] font-display font-bold uppercase tracking-widest text-white placeholder:text-white/20 focus:border-white/30 transition-all outline-none"
+                    placeholder="Send Message..."
+                    className="w-full bg-white border border-gray-300 px-4 py-3 pr-12 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all outline-none shadow-sm"
                   />
                   <button 
                     onClick={handleSendChat}
                     disabled={isTyping}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-white/40 hover:text-white transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                   >
-                    <Send size={18} />
+                    <Send size={16} />
                   </button>
                 </div>
               </div>

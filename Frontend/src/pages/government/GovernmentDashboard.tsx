@@ -1,6 +1,5 @@
 import React from 'react';
-import { Typography, Grid, Stack, alpha } from '@mui/material';
-import { motion } from 'motion/react';
+import { Grid } from '@mui/material';
 import { 
   BarChart, 
   Bar, 
@@ -38,7 +37,7 @@ const pieData = [
   { name: 'Logistics', value: 200 },
 ];
 
-const COLORS = ['#EF4444', '#F59E0B', '#3B82F6', '#10B981'];
+const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
 
 const mapContainerStyle = {
   width: '100%',
@@ -98,65 +97,70 @@ export default function GovernmentDashboard() {
     }
   };
 
+
   return (
-    <div className="space-y-10 animate-in fade-in duration-1000 font-sans">
+    <div className="h-full font-sans bg-gray-50 text-gray-900 flex flex-col gap-6 p-0 md:p-0">
       {/* Strategic Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex-shrink-0 flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 border border-gray-200 shadow-sm">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
-            <span className="text-[10px] font-display font-bold uppercase tracking-[0.2em] text-secondary-container">Rashtriya Suchna Sync Sakriya</span>
+            <span className="w-2 h-2 bg-blue-600 animate-pulse"></span>
+            <span className="text-xs font-bold uppercase tracking-widest text-blue-600">National Data Sync Active</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-display font-black uppercase tracking-tighter text-white">Rashtriya Aapda Niyantran</h1>
-          <p className="text-white/40 font-mono text-[10px] uppercase tracking-widest mt-2 px-1">Authority: MUKHYA NIYANTRAN KENDRA v4.2</p>
+          <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-tight text-gray-900">National Command Center</h1>
+          <p className="text-gray-500 font-semibold text-xs uppercase tracking-wider mt-2">Authority: CENTRAL CONTROL HUB v4.2</p>
         </div>
         
         <div className="flex items-center gap-3">
-          <button className="px-6 py-3 rounded-xl border border-white/5 font-display text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 transition-all flex items-center gap-2">
+          <button className="px-6 py-3 border border-gray-300 text-xs font-bold uppercase tracking-widest text-gray-600 hover:bg-gray-50 transition-colors flex items-center gap-2 bg-white">
             <Download size={16} />
             Export Dossier
           </button>
-          <button className="px-6 py-3 rounded-xl bg-white text-black font-display text-[10px] font-bold uppercase tracking-widest hover:bg-secondary-container transition-all flex items-center gap-2">
+          <button className="px-6 py-3 bg-blue-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm">
             <Share2 size={16} />
             Share Protocol
           </button>
         </div>
       </div>
 
-      {/* National Heatmap Section */}
-      <div className="glass-panel h-[500px] rounded-[2.5rem] border border-white/5 relative overflow-hidden">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
+        {/* National Heatmap Section */}
+        <div className="bg-white flex-1 border border-gray-200 relative overflow-hidden shadow-sm min-h-[400px]">
         <div className="absolute top-8 left-8 z-10 pointer-events-none">
-           <div className="pointer-events-auto flex items-center gap-4 glass-panel px-6 py-3 rounded-full border-white/10 backdrop-blur-md">
-              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <div className="text-[10px] font-display font-black uppercase tracking-widest text-white">Real-Time National Satcom Matrix</div>
+           <div className="pointer-events-auto flex items-center gap-4 bg-white px-6 py-3 border border-gray-200 shadow-sm">
+              <div className="w-2 h-2 bg-red-500 animate-pulse" />
+              <div className="text-xs font-bold uppercase tracking-widest text-gray-900">Real-Time National Matrix</div>
            </div>
         </div>
 
         <div className="absolute top-8 right-8 z-10 pointer-events-none">
            <div className="pointer-events-auto flex flex-col gap-2">
               {['HIGH', 'MEDIUM', 'LOW'].map(lvl => (
-                <div key={lvl} className="glass-panel px-4 py-2 rounded-xl flex items-center gap-3 border-white/5 text-[9px] font-mono uppercase text-white/40">
-                  <div className={`w-1.5 h-1.5 rounded-full ${lvl === 'HIGH' ? 'bg-red-500' : lvl === 'MEDIUM' ? 'bg-amber-500' : 'bg-green-500'}`} />
-                  {lvl} SEVERITY UNITS
+                <div key={lvl} className="bg-white px-4 py-2 flex items-center gap-3 border border-gray-200 shadow-sm text-[10px] font-bold uppercase text-gray-600">
+                  <div className={`w-2 h-2 ${lvl === 'HIGH' ? 'bg-red-500' : lvl === 'MEDIUM' ? 'bg-amber-500' : 'bg-green-500'}`} />
+                  {lvl} SEVERITY
                 </div>
               ))}
            </div>
         </div>
 
-        <div className="w-full h-full bg-black/20">
+        <div className="w-full h-full bg-gray-100">
           {isLoaded && GOOGLE_MAPS_API_KEY ? (
             <GoogleMap
               mapContainerStyle={mapContainerStyle}
               center={indiaCenter}
               zoom={5}
               options={{
-                mapTypeId: 'satellite',
                 disableDefaultUI: true,
                 zoomControl: true,
                 styles: [
-                  { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-                  { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-                  { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+                  { elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
+                  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+                  { elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
+                  { elementType: 'labels.text.stroke', stylers: [{ color: '#f5f5f5' }] },
+                  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#e9e9e9' }] },
+                  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
                 ]
               }}
             >
@@ -180,170 +184,74 @@ export default function GovernmentDashboard() {
                   position={{ lat: selectedCluster.lat, lng: selectedCluster.lng }}
                   onCloseClick={() => setSelectedCluster(null)}
                 >
-                  <div className="p-4 min-w-[200px] bg-black text-white font-sans border border-white/10 rounded-2xl">
-                    <div className="text-[10px] font-display font-black uppercase tracking-widest text-secondary-container mb-1">{selectedCluster.name} UNIT</div>
-                    <div className="text-xl font-display font-black uppercase tracking-tighter mb-4">{selectedCluster.count} Incidents</div>
-                    <button className="w-full py-2 bg-white text-black rounded-lg text-[9px] font-display font-black uppercase tracking-widest hover:bg-secondary-container transition-colors">Analyze Vector Hub</button>
+                  <div className="p-4 min-w-[200px] bg-white text-gray-900 border border-gray-200">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-1">{selectedCluster.name} UNIT</div>
+                    <div className="text-xl font-bold uppercase tracking-tight mb-4">{selectedCluster.count} Incidents</div>
+                    <button className="w-full py-2 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors">Analyze Sector Hub</button>
                   </div>
                 </InfoWindow>
               )}
             </GoogleMap>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center gap-6 text-white/20">
+            <div className="h-full flex flex-col items-center justify-center gap-6 text-gray-400">
               <Activity className="animate-spin" size={48} strokeWidth={1} />
-              <div className="text-[10px] font-mono uppercase tracking-[0.4em]">Establishing Satellite Uplink...</div>
-              {!GOOGLE_MAPS_API_KEY && <div className="text-[10px] text-red-400/50 uppercase font-mono">VITE_GOOGLE_MAPS_API_KEY MISSING</div>}
+              <div className="text-[10px] font-bold uppercase tracking-[0.2em]">Establishing Data Uplink...</div>
+              {!GOOGLE_MAPS_API_KEY && <div className="text-[10px] text-red-500 uppercase font-bold">VITE_GOOGLE_MAPS_API_KEY MISSING</div>}
             </div>
           )}
         </div>
+        </div>
+
+        {/* Right Side Panel */}
+        <div className="w-full lg:w-[400px] xl:w-[500px] flex flex-col gap-6 overflow-y-auto scrollbar-hide shrink-0 pb-6 lg:pb-0">
+          {/* Global Statistics Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-1 gap-4">
+            {[
+              { label: 'National Safety Index', value: '7.8 / 10', icon: <Globe />, detail: 'UP 0.4 FROM Q2', color: '#10b981' },
+              { label: 'Active Control Hubs', value: '528', icon: <MapPin />, detail: '9 NEW DEPLOYMENTS', color: '#3b82f6' },
+              { label: 'Inter-State Coordination', value: '96.2%', icon: <Network />, detail: 'AI LAYER OPTIMIZED', color: '#f59e0b' }
+            ].map((stat, i) => (
+              <div key={i} className="bg-white p-6 border border-gray-200 flex items-center gap-4 hover:border-blue-400 group shadow-sm">
+                 <div className="w-12 h-12 shrink-0 bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 group-hover:text-blue-600 transition-colors">
+                    {React.isValidElement(stat.icon) && React.cloneElement(stat.icon as React.ReactElement<any>, { size: 24, strokeWidth: 1.5 })}
+                 </div>
+                 <div>
+                   <div className="text-2xl font-bold uppercase tracking-tight text-gray-900">{stat.value}</div>
+                   <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{stat.label}</div>
+                 </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Policy Analysis (AI) */}
+          <div className="bg-white p-8 border border-gray-200 flex flex-col shadow-sm">
+             <div className="flex items-center justify-between mb-6">
+               <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-50 border border-blue-100 text-blue-600">
+                    <Sparkles size={18} />
+                  </div>
+                  <h3 className="text-lg font-bold uppercase tracking-tight">Policy Analysis</h3>
+                </div>
+                <button onClick={handleGenerateSummary} disabled={isSummarizing || reports.length === 0} className="px-4 py-2 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-sm">
+                  {isSummarizing ? 'Scanning...' : 'Scan'}
+                </button>
+             </div>
+
+             <div className="">
+               {aiSummary ? (
+                 <div className="text-xs font-medium text-gray-700 leading-relaxed space-y-4 whitespace-pre-wrap">
+                   {aiSummary}
+                 </div>
+               ) : (
+                 <div className="py-6 text-center border border-dashed border-gray-300">
+                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Neural Analysis Required</p>
+                 </div>
+               )}
+             </div>
+          </div>
+        </div>
       </div>
 
-      <Grid container spacing={4}>
-        {/* Strategic Data Visualization */}
-        <Grid item xs={12} lg={8}>
-          <div className="glass-panel p-10 h-[550px] rounded-[2.5rem] border border-white/5 flex flex-col">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h3 className="font-display text-xl font-black uppercase tracking-tighter text-white/80">Rashtriya Sahayta Gati Metrics</h3>
-                <p className="text-[9px] font-mono uppercase text-white/20 tracking-widest">Velocity Metrics / National Scale</p>
-              </div>
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-500" />
-                  <div className="text-[9px] font-mono text-white/40 uppercase">Signals</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <div className="text-[9px] font-mono text-white/40 uppercase">Resolved</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                 <BarChart data={dataByCity} barGap={8}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#ffffff20', fontSize: 10, fontWeight: 700, letterSpacing: 2 }} 
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#ffffff20', fontSize: 10 }} 
-                    />
-                    <Tooltip 
-                      cursor={{ fill: '#ffffff05' }}
-                      contentStyle={{ backgroundColor: '#000', border: '1px solid #ffffff10', borderRadius: '16px', padding: '16px' }}
-                      itemStyle={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' }}
-                    />
-                    <Bar dataKey="reports" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="resolved" fill="#10B981" radius={[4, 4, 0, 0]} />
-                 </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </Grid>
-
-        <Grid item xs={12} lg={4}>
-          <div className="flex flex-col gap-4 h-full">
-            <div className="glass-panel p-10 h-[300px] rounded-[2.5rem] border border-white/5 flex flex-col">
-              <h3 className="font-display text-xl font-black uppercase tracking-tighter text-white/80 mb-8">Samagri Anuman</h3>
-              
-              <div className="flex-1 min-h-0">
-                 <ResponsiveContainer width="100%" height="100%">
-                   <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="45%"
-                        innerRadius={60}
-                        outerRadius={85}
-                        paddingAngle={4}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip contentStyle={{ backgroundColor: '#000', border: '1px solid #ffffff10', borderRadius: '16px' }} />
-                   </PieChart>
-                 </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="glass-panel p-10 flex-1 rounded-[2.5rem] border border-secondary-container/20 flex flex-col relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-8 opacity-5">
-                  <Sparkles size={120} />
-               </div>
-               <div className="flex items-center justify-between mb-6">
-                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-secondary-container/10 rounded-lg text-secondary-container">
-                      <Sparkles size={18} />
-                    </div>
-                    <h3 className="font-display text-lg font-black uppercase tracking-tighter">Niti Vishleshan (AI)</h3>
-                  </div>
-                  <button 
-                  onClick={handleGenerateSummary}
-                  disabled={isSummarizing || reports.length === 0}
-                  className="p-2 rounded-lg bg-white/5 text-white/40 hover:text-white transition-colors"
-                  >
-                    {isSummarizing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                  </button>
-               </div>
-
-               <div className="flex-1 overflow-y-auto scrollbar-hide">
-                 {aiSummary ? (
-                   <div className="text-[11px] font-mono text-white/70 leading-relaxed space-y-4 whitespace-pre-wrap">
-                     {aiSummary}
-                   </div>
-                 ) : (
-                   <div className="h-full flex flex-col items-center justify-center text-center">
-                     <p className="text-[10px] font-mono text-white/20 uppercase tracking-[0.2em] mb-4">Neural Analysis Required</p>
-                     <button 
-                      onClick={handleGenerateSummary}
-                      className="px-6 py-3 bg-white text-black rounded-xl text-[9px] font-display font-black uppercase tracking-widest hover:bg-secondary-container transition-all"
-                     >
-                        Run Strategic Scan
-                     </button>
-                   </div>
-                 )}
-               </div>
-            </div>
-          </div>
-        </Grid>
-
-        {/* Global Statistics Grid */}
-        <Grid item xs={12}>
-           <Grid container spacing={4}>
-              {[
-                { label: 'Rashtriya Suraksha index', value: '7.8 / 10', icon: <Globe />, detail: 'UP 0.4 FROM Q2', color: '#10B981' },
-                { label: 'Sakriya Sanchalan Kendra', value: '528', icon: <MapPin />, detail: '9 NEW DEPLOYMENTS', color: '#3B82F6' },
-                { label: 'Inter-State Coordination', value: '96.2%', icon: <Network />, detail: 'AI LAYER OPTIMIZED', color: '#F59E0B' }
-              ].map((stat, i) => (
-                <Grid item xs={12} md={4} key={i}>
-                  <div className="glass-panel p-10 rounded-[2.5rem] border border-white/5 text-center transition-all hover:scale-[1.02] group">
-                     <div className="mb-4 mx-auto w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-white/20 group-hover:text-white group-hover:bg-white/10 transition-all duration-500">
-                        {React.isValidElement(stat.icon) && React.cloneElement(stat.icon as React.ReactElement<any>, { size: 32, strokeWidth: 1.5 })}
-                     </div>
-                     <div className="text-4xl lg:text-5xl font-display font-black uppercase tracking-tighter text-white mb-2">{stat.value}</div>
-                     <div className="text-[10px] font-display font-bold uppercase tracking-[0.3em] text-white/20 mb-4">{stat.label}</div>
-                     <div className={`text-[9px] font-mono font-black tracking-widest uppercase py-1 px-3 rounded-full inline-block border ${
-                       stat.color === '#10B981' ? 'border-green-500/20 text-green-500 bg-green-500/5' : 
-                       stat.color === '#3B82F6' ? 'border-blue-500/20 text-blue-500 bg-blue-500/5' : 
-                       'border-amber-500/20 text-amber-500 bg-amber-500/5'
-                     }`}>
-                       {stat.detail}
-                     </div>
-                  </div>
-                </Grid>
-              ))}
-           </Grid>
-        </Grid>
-      </Grid>
 
       {/* Social Impact Analytics — Looker Studio */}
       <LookerStudioEmbed />

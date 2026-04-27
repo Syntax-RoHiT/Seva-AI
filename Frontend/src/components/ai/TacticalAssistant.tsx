@@ -6,7 +6,7 @@ import { chatWithAssistant } from '../../services/geminiService';
 export default function TacticalAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([
-    { role: 'model', text: 'SevaAI Tactical Link Established. Waiting for instructions.' }
+    { role: 'model', text: 'Seva AI Tactical Link Established. Waiting for instructions.' }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -43,39 +43,39 @@ export default function TacticalAssistant() {
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-[100]">
+    <div className="fixed bottom-8 right-8 z-[100] font-sans">
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            className="mb-4 w-96 h-[500px] glass-panel border border-white/20 rounded-[2rem] overflow-hidden flex flex-col shadow-2xl"
+            className="mb-4 w-96 h-[500px] bg-white border border-gray-200 shadow-xl flex flex-col"
           >
             {/* Header */}
-            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-secondary-container/20 flex items-center justify-center text-secondary-container">
+                <div className="w-8 h-8 bg-blue-100 flex items-center justify-center text-blue-600">
                   <Bot size={16} />
                 </div>
                 <div>
-                  <div className="text-[10px] font-display font-black uppercase tracking-widest">SevaAI Tactical</div>
-                  <div className="text-[8px] font-mono text-secondary-container uppercase">Operational • 99.8% Efficiency</div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-gray-900">Seva AI Tactical</div>
+                  <div className="text-[10px] font-semibold text-blue-600 uppercase tracking-widest">Operational • 99.8% Efficiency</div>
                 </div>
               </div>
-              <button onClick={() => setIsOpen(false)} className="text-white/40 hover:text-white transition-colors">
-                <X size={16} />
+              <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
+                <X size={18} />
               </button>
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide bg-white">
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] p-4 rounded-2xl text-[11px] font-mono uppercase tracking-tight leading-relaxed ${
+                  <div className={`max-w-[80%] p-4 text-xs tracking-wide leading-relaxed font-medium ${
                     msg.role === 'user' 
-                    ? 'bg-white text-black rounded-tr-none' 
-                    : 'bg-white/5 border border-white/5 text-white/80 rounded-tl-none'
+                    ? 'bg-blue-600 text-white rounded-l-xl rounded-br-xl' 
+                    : 'bg-gray-100 text-gray-800 rounded-r-xl rounded-bl-xl border border-gray-200'
                   }`}>
                     {msg.text}
                   </div>
@@ -83,28 +83,28 @@ export default function TacticalAssistant() {
               ))}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="bg-white/5 border border-white/5 p-3 rounded-2xl flex gap-1">
-                    <span className="w-1 h-1 bg-white/40 rounded-full animate-bounce"></span>
-                    <span className="w-1 h-1 bg-white/40 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                    <span className="w-1 h-1 bg-white/40 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                  <div className="bg-gray-100 border border-gray-200 p-4 rounded-r-xl rounded-bl-xl flex gap-1">
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t border-white/10 bg-white/5">
+            <div className="p-4 border-t border-gray-200 bg-gray-50">
               <div className="relative">
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                   placeholder="Enter command..."
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-mono uppercase tracking-widest focus:outline-none focus:border-secondary-container transition-colors"
+                  className="w-full bg-white border border-gray-300 px-4 py-3 text-sm font-medium focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
                 />
                 <button 
                   onClick={handleSend}
-                  className="absolute right-2 top-2 p-1.5 bg-secondary-container rounded-lg text-black hover:bg-white transition-all"
+                  className="absolute right-2 top-2 p-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                 >
                   <Send size={14} />
                 </button>
@@ -118,13 +118,13 @@ export default function TacticalAssistant() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl transition-all ${
-          isOpen ? 'bg-white text-black' : 'bg-secondary-container text-black'
+        className={`w-14 h-14 flex items-center justify-center shadow-lg transition-all ${
+          isOpen ? 'bg-white text-gray-900 border border-gray-200' : 'bg-blue-600 text-white'
         }`}
       >
         {isOpen ? <X size={24} /> : <Bot size={24} />}
         {!isOpen && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-black animate-pulse"></span>
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white animate-pulse"></span>
         )}
       </motion.button>
     </div>

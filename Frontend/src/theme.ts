@@ -5,22 +5,21 @@
 
 import { createTheme, alpha } from '@mui/material/styles';
 
-// Material Design 3 Palette Colors - Light Theme Focus
 const colors = {
-  primary: '#EF4444', // Emergency Red (Tailwind Red 500) - Moving away from Blue
-  secondary: '#F59E0B', // Orange
-  info: '#3B82F6', // Blue (kept for info but not primary)
-  error: '#DC2626', // Deep Red
-  warning: '#D97706', // Deep Orange
-  success: '#10B981', // Green
+  primary: '#1a73e8', // Google Blue
+  secondary: '#34a853', // Google Green
+  info: '#4285f4', // Google Blue variants
+  error: '#ea4335', // Google Red
+  warning: '#fbbc04', // Google Yellow
+  success: '#34a853',
   background: {
-    default: '#FFFFFF', // Clean White
-    paper: '#F8FAFC', // Slate 50
-    subtle: '#F1F5F9', // Slate 100
+    default: '#ffffff',
+    paper: '#ffffff',
+    subtle: '#f8f9fa',
   },
   text: {
-    primary: '#0F172A', // Slate 900
-    secondary: '#475569', // Slate 600
+    primary: '#202124',
+    secondary: '#5f6368',
   }
 };
 
@@ -29,7 +28,7 @@ export const lightTheme = createTheme({
     mode: 'light',
     primary: {
       main: colors.primary,
-      contrastText: '#FFFFFF',
+      contrastText: '#ffffff',
     },
     secondary: {
       main: colors.secondary,
@@ -51,37 +50,39 @@ export const lightTheme = createTheme({
       primary: colors.text.primary,
       secondary: colors.text.secondary,
     },
-    divider: alpha(colors.text.secondary, 0.1),
+    divider: alpha(colors.text.secondary, 0.2),
   },
   typography: {
-    fontFamily: '"Outfit", "Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Google Sans", "Open Sans", "Roboto", "Arial", sans-serif',
     h1: {
-      fontWeight: 700,
-      letterSpacing: '-0.02em',
+      fontWeight: 400,
       color: colors.text.primary,
     },
     h2: {
-      fontWeight: 700,
-      letterSpacing: '-0.01em',
+      fontWeight: 400,
+      color: colors.text.primary,
+    },
+    h3: {
+      fontWeight: 400,
       color: colors.text.primary,
     },
     h6: {
-      fontWeight: 600,
+      fontWeight: 500,
       color: colors.text.primary,
     },
     button: {
       textTransform: 'none',
-      fontWeight: 600,
+      fontWeight: 500,
     },
   },
   shape: {
-    borderRadius: 16,
+    borderRadius: 0, // No rounded corners
   },
   components: {
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.background.default,
           color: colors.text.primary,
         }
       }
@@ -89,42 +90,39 @@ export const lightTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: 0,
           padding: '10px 24px',
           boxShadow: 'none',
           '&:hover': {
-            boxShadow: '0px 4px 12px rgba(239, 68, 68, 0.15)',
+            boxShadow: '0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)',
           },
         },
-        containedPrimary: {
-          background: colors.primary,
-        }
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.05), 0px 4px 12px rgba(0, 0, 0, 0.03)',
-          border: `1px solid ${alpha(colors.text.secondary, 0.08)}`,
+          boxShadow: '0px 1px 2px 0px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15)',
+          border: 'none', // Material uses shadow instead of border usually, but kept clean
+          borderRadius: 0,
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 20,
-          backgroundColor: '#FFFFFF',
+          borderRadius: 0,
+          backgroundColor: '#ffffff',
         },
       },
     },
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: alpha('#FFFFFF', 0.8),
-          backdropFilter: 'blur(12px)',
+          backgroundColor: '#ffffff',
           color: colors.text.primary,
-          borderBottom: `1px solid ${alpha(colors.text.secondary, 0.08)}`,
+          boxShadow: '0 1px 2px 0 rgba(60, 64, 67, 0.3)',
         }
       }
     }

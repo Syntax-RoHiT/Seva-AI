@@ -7,29 +7,25 @@ import { Globe, Loader2, Radio, TrendingUp } from 'lucide-react';
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 const LIBRARIES: ('visualization' | 'geometry')[] = ['visualization'];
 
-const NIGHT_MAP_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#0a0a0a' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#000000' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#4a4a4a' }] },
-  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#2a2a2a' }] },
-  { featureType: 'administrative.country', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
-  { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
-  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#bdbdbd' }] },
+const LIGHT_MAP_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#f5f5f5' }] },
+  { featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{ color: '#bdbdbd' }] },
+  { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#eeeeee' }] },
   { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0d1a0d' }] },
-  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#1a3a1a' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1a1a1a' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#212121' }] },
-  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
-  { featureType: 'road', elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a1a' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#2c2c2c' }] },
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1f2835' }] },
-  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#f3d19c' }] },
-  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#2f3948' }] },
-  { featureType: 'transit.station', elementType: 'labels.text.fill', stylers: [{ color: '#d59563' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#050a18' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#515c6d' }] },
-  { featureType: 'water', elementType: 'labels.text.stroke', stylers: [{ color: '#17263c' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] },
+  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road.arterial', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#dadada' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
+  { featureType: 'road.local', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
+  { featureType: 'transit.line', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] },
+  { featureType: 'transit.station', elementType: 'geometry', stylers: [{ color: '#eeeeee' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9c9c9' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] }
 ];
 
 const center = { lat: 26.9124, lng: 75.7873 };
@@ -58,11 +54,11 @@ interface ZonePoint {
 }
 
 function getColorForScore(score: number): string {
-  if (score >= 8) return '#EF4444';   // RED: CRITICAL
-  if (score >= 6) return '#F97316';   // ORANGE: HIGH
-  if (score >= 4) return '#F59E0B';   // AMBER: MODERATE
-  if (score >= 2) return '#22C55E';   // GREEN: LOW
-  return '#3B82F6';                    // BLUE: RESOLVED
+  if (score >= 8) return '#ef4444';   // RED: CRITICAL
+  if (score >= 6) return '#f97316';   // ORANGE: HIGH
+  if (score >= 4) return '#f59e0b';   // AMBER: MODERATE
+  if (score >= 2) return '#22c55e';   // GREEN: LOW
+  return '#3b82f6';                    // BLUE: RESOLVED
 }
 
 function getLabelForScore(score: number): string {
@@ -139,7 +135,7 @@ export default function LiveHeatmap() {
       radius: 60,
       opacity: 0.8,
       gradient: [
-        'rgba(0, 0, 255, 0)',
+        'rgba(255, 255, 255, 0)',
         'rgba(0, 255, 255, 0.4)',
         'rgba(0, 255, 0, 0.6)',
         'rgba(255, 255, 0, 0.7)',
@@ -159,9 +155,9 @@ export default function LiveHeatmap() {
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           fillColor: color,
-          fillOpacity: 0.4,
+          fillOpacity: 0.6,
           strokeWeight: 2,
-          strokeColor: color,
+          strokeColor: '#ffffff',
           scale,
         },
         title: `Score: ${zone.urgencyScore}`,
@@ -180,7 +176,7 @@ export default function LiveHeatmap() {
 
     if (showForecast) {
       FORECAST_ZONES.forEach(fz => {
-        const color = fz.predictedScore >= 8 ? '#A855F7' : fz.predictedScore >= 6 ? '#8B5CF6' : '#7C3AED';
+        const color = fz.predictedScore >= 8 ? '#9333ea' : fz.predictedScore >= 6 ? '#7c3aed' : '#6d28d9';
         // Outer dashed ring
         const circle = new google.maps.Circle({
           center: { lat: fz.lat, lng: fz.lng },
@@ -190,7 +186,7 @@ export default function LiveHeatmap() {
           strokeOpacity: 0.8,
           strokeWeight: 2,
           fillColor: color,
-          fillOpacity: 0.06,
+          fillOpacity: 0.1,
           zIndex: 1,
         });
         // Clickable inner label marker
@@ -200,9 +196,9 @@ export default function LiveHeatmap() {
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             fillColor: color,
-            fillOpacity: 0.3,
+            fillOpacity: 0.5,
             strokeWeight: 1.5,
-            strokeColor: color,
+            strokeColor: '#ffffff',
             scale: 8,
           },
           title: fz.label,
@@ -224,24 +220,24 @@ export default function LiveHeatmap() {
   const highCount = zones.filter(z => z.urgencyScore >= 6 && z.urgencyScore < 8).length;
 
   return (
-    <div className="glass-panel overflow-hidden rounded-[2.5rem] border border-white/10 h-[600px] relative">
+    <div className="bg-white border border-gray-200 h-[600px] relative shadow-sm font-sans">
       {/* Map Header Overlay */}
       <div className="absolute top-6 left-6 z-20 flex items-center gap-3 flex-wrap">
-        <div className="px-4 py-2 bg-black/80 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3">
-          <Globe size={14} className="text-secondary-container animate-spin-slow" />
-          <span className="text-[10px] font-display font-bold uppercase tracking-widest text-white">
-            Live Urgency Heatmap — Rajasthan Kendra
+        <div className="px-4 py-2 bg-white border border-gray-200 shadow-sm flex items-center gap-3">
+          <Globe size={14} className="text-blue-600 animate-spin-slow" />
+          <span className="text-xs font-bold uppercase tracking-widest text-gray-900">
+            Live Urgency Heatmap
           </span>
         </div>
         {isSyncing ? (
-          <div className="px-4 py-2 bg-black/80 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2">
-            <Loader2 size={12} className="animate-spin text-white/40" />
-            <span className="text-[9px] font-mono uppercase tracking-widest text-white/40">Syncing...</span>
+          <div className="px-4 py-2 bg-white border border-gray-200 shadow-sm flex items-center gap-2">
+            <Loader2 size={14} className="animate-spin text-gray-400" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Syncing...</span>
           </div>
         ) : (
-          <div className="px-4 py-2 bg-black/80 backdrop-blur-md rounded-full border border-secondary-container/30 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-secondary-container animate-pulse" />
-            <span className="text-[9px] font-mono uppercase tracking-widest text-secondary-container">
+          <div className="px-4 py-2 bg-white border border-gray-200 shadow-sm flex items-center gap-2">
+            <span className="w-2 h-2 bg-blue-600 animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-700">
               Live • {liveCount} Field Reports
             </span>
           </div>
@@ -249,13 +245,13 @@ export default function LiveHeatmap() {
         {/* Forecast toggle */}
         <button
           onClick={() => setShowForecast(f => !f)}
-          className={`px-4 py-2 bg-black/80 backdrop-blur-md rounded-full border flex items-center gap-2 transition-all ${
-            showForecast ? 'border-purple-500/40 text-purple-400' : 'border-white/10 text-white/30'
+          className={`px-4 py-2 bg-white border shadow-sm flex items-center gap-2 transition-colors ${
+            showForecast ? 'border-purple-300 text-purple-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
           }`}
         >
-          <TrendingUp size={12} />
-          <span className="text-[9px] font-mono uppercase tracking-widest">
-            {showForecast ? 'BQML Forecast ON' : 'Forecast OFF'}
+          <TrendingUp size={14} />
+          <span className="text-[10px] font-bold uppercase tracking-widest">
+            {showForecast ? 'Forecast ON' : 'Forecast OFF'}
           </span>
         </button>
       </div>
@@ -269,7 +265,7 @@ export default function LiveHeatmap() {
             zoom={13}
             onLoad={onMapLoad}
             options={{
-              styles: NIGHT_MAP_STYLE,
+              styles: LIGHT_MAP_STYLE,
               disableDefaultUI: true,
               zoomControl: true,
               zoomControlOptions: {
@@ -279,10 +275,10 @@ export default function LiveHeatmap() {
             }}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-white/5">
-            <Radio size={40} className="text-white/10 animate-pulse" />
-            <span className="text-[10px] font-display font-bold uppercase tracking-widest text-white/20">
-              Satellite Link Establishing...
+          <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-gray-50">
+            <Radio size={40} className="text-blue-600 animate-pulse" />
+            <span className="text-xs font-bold uppercase tracking-widest text-gray-600">
+              Data Link Establishing...
             </span>
           </div>
         )}
@@ -290,39 +286,38 @@ export default function LiveHeatmap() {
 
       {/* Zone Info Popup */}
       {selectedZone && (
-        <div className="absolute top-20 right-6 z-20 w-64 bg-black/90 backdrop-blur-xl border rounded-2xl p-5 border-white/10">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-[10px] font-mono uppercase text-white/40 tracking-widest">Zone Intel</div>
+        <div className="absolute top-20 right-6 z-20 w-64 bg-white border border-gray-200 shadow-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Zone Intel</div>
             <button
               onClick={() => setSelectedZone(null)}
-              className="text-white/20 hover:text-white text-xs"
+              className="text-gray-400 hover:text-gray-900"
             >✕</button>
           </div>
           <div
-            className="text-2xl font-display font-black uppercase tracking-tighter mb-1"
+            className="text-2xl font-bold uppercase tracking-tight mb-2"
             style={{ color: getColorForScore(selectedZone.urgencyScore) }}
           >
             {getLabelForScore(selectedZone.urgencyScore)}
           </div>
-          <div className="text-[10px] font-mono text-white/40 mb-4">
+          <div className="text-[10px] font-bold text-gray-400 mb-6 uppercase tracking-widest">
             {selectedZone.lat.toFixed(4)}°N, {selectedZone.lng.toFixed(4)}°E
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-display font-bold uppercase text-white/30">Urgency Score</span>
+            <span className="text-xs font-bold uppercase text-gray-600">Urgency Score</span>
             <span
-              className="text-lg font-mono font-black tracking-tighter"
+              className="text-xl font-bold tracking-tight"
               style={{ color: getColorForScore(selectedZone.urgencyScore) }}
             >
               {selectedZone.urgencyScore.toFixed(1)}
             </span>
           </div>
-          <div className="mt-3 h-1 bg-white/5 rounded-full overflow-hidden">
+          <div className="mt-4 h-2 bg-gray-100 overflow-hidden">
             <div
-              className="h-full rounded-full transition-all"
+              className="h-full transition-all"
               style={{
                 width: `${(selectedZone.urgencyScore / 10) * 100}%`,
                 backgroundColor: getColorForScore(selectedZone.urgencyScore),
-                boxShadow: `0 0 10px ${getColorForScore(selectedZone.urgencyScore)}`,
               }}
             />
           </div>
@@ -331,41 +326,41 @@ export default function LiveHeatmap() {
 
       {/* Bottom Legend */}
       <div className="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-end pointer-events-none">
-        <div className="glass-panel p-4 rounded-xl border-white/5 pointer-events-auto">
-          <div className="text-[9px] font-display font-bold uppercase tracking-[0.2em] text-white/30 mb-3">
+        <div className="bg-white p-5 border border-gray-200 shadow-sm pointer-events-auto">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4">
             Zone Legend
           </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
             {[
-              { color: '#EF4444', label: 'Critical' },
-              { color: '#F97316', label: 'High' },
-              { color: '#F59E0B', label: 'Moderate' },
-              { color: '#22C55E', label: 'Low' },
-              { color: '#3B82F6', label: 'Resolved' },
-              { color: '#A855F7', label: 'BQML Forecast', dashed: true },
+              { color: '#ef4444', label: 'Critical' },
+              { color: '#f97316', label: 'High' },
+              { color: '#f59e0b', label: 'Moderate' },
+              { color: '#22c55e', label: 'Low' },
+              { color: '#3b82f6', label: 'Resolved' },
+              { color: '#9333ea', label: 'Forecast', dashed: true },
             ].map(item => (
-              <div key={item.label} className="flex items-center gap-1.5">
+              <div key={item.label} className="flex items-center gap-2">
                 <div
-                  className={`w-2 h-2 rounded-full ${'dashed' in item && item.dashed ? 'ring-1 ring-current bg-transparent' : ''}`}
-                  style={{ backgroundColor: 'dashed' in item && item.dashed ? 'transparent' : item.color, color: item.color, borderColor: item.color }}
+                  className={`w-3 h-3 ${'dashed' in item && item.dashed ? 'border border-dashed' : ''}`}
+                  style={{ backgroundColor: 'dashed' in item && item.dashed ? 'transparent' : item.color, borderColor: item.color }}
                 />
-                <span className="text-[9px] font-mono text-white/50 uppercase">{item.label}</span>
+                <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide">{item.label}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="glass-panel p-4 rounded-xl border-white/5 pointer-events-auto">
-          <div className="flex gap-4">
+        <div className="bg-white p-4 border border-gray-200 shadow-sm pointer-events-auto">
+          <div className="flex gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-              <span className="text-[10px] font-mono text-white/60 uppercase">
+              <div className="w-3 h-3 bg-red-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide">
                 Critical: {criticalCount}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-orange-400" />
-              <span className="text-[10px] font-mono text-white/60 uppercase">
+              <div className="w-3 h-3 bg-orange-500" />
+              <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide">
                 High: {highCount}
               </span>
             </div>

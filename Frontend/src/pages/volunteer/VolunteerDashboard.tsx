@@ -1,32 +1,23 @@
 import React from 'react';
 import { 
-  Typography, 
-  Stack, 
-  Avatar, 
-  Switch, 
-  alpha,
   Grid,
   Dialog,
   DialogContent,
   IconButton
 } from '@mui/material';
 import { 
-  ShieldCheck, 
   MapPin, 
-  Clock, 
   CheckCircle2, 
   X, 
-  Phone, 
-  MessageCircle,
-  ShieldAlert,
   Navigation,
   Zap,
   Activity,
   ChevronRight,
   Target,
-  Signal
+  Signal,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -60,7 +51,7 @@ export default function VolunteerDashboard() {
   React.useEffect(() => {
     if (loading || !user) return;
 
-    // Listen to available missions instead of raw reports
+    // Listen to available missions matched to this volunteer or pending
     const q = query(
       collection(db, 'missions'), 
       where('status', '==', 'PENDING')
@@ -111,70 +102,66 @@ export default function VolunteerDashboard() {
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-1000 font-sans">
-      {/* HUD Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="h-full font-sans text-gray-900 bg-gray-50 flex flex-col gap-6 p-0 md:p-0">
+      {/* Header */}
+      <div className="flex-shrink-0 flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 border border-gray-200 shadow-sm">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
-            <span className="text-[10px] font-display font-bold uppercase tracking-[0.2em] text-secondary-container">Field Signal Locked</span>
+            <span className="w-2 h-2 bg-blue-600 animate-pulse"></span>
+            <span className="text-xs font-bold uppercase tracking-widest text-blue-600">Field Signal Locked</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-display font-black uppercase tracking-tighter">Seva Deck</h1>
-          <p className="text-white/40 font-mono text-[10px] uppercase tracking-widest mt-2 px-1">Sathi Pehchan: {user?.displayName || 'OPERATOR-01'}</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 uppercase">Volunteer Hub</h1>
+          <p className="text-gray-500 text-sm uppercase tracking-wider mt-2 font-semibold">Operator ID: {user?.displayName || 'VOLUNTEER-01'}</p>
         </div>
         
-        <div className="flex items-center gap-6 glass-panel px-6 py-4 rounded-2xl border-white/5">
-          {/* GPS Status Badge */}
-          <div className="flex items-center gap-2">
-            <span className={`w-1.5 h-1.5 rounded-full transition-colors ${gpsActive ? 'bg-green-400 animate-pulse' : 'bg-white/20'}`} />
-            <span className={`text-[9px] font-mono uppercase tracking-widest ${gpsActive ? 'text-green-400' : 'text-white/20'}`}>
-              {gpsError ? 'GPS Error' : gpsActive ? 'GPS Live' : 'GPS Off'}
+        <div className="flex items-center gap-6 border border-gray-200 bg-gray-50 px-6 py-4">
+          <div className="flex flex-col items-end">
+            <span className={`text-xs font-bold uppercase tracking-widest mb-1 ${gpsActive ? 'text-green-600' : 'text-gray-400'}`}>
+              {gpsError ? 'GPS Error' : gpsActive ? 'GPS Active' : 'GPS Offline'}
             </span>
+            <span className="text-xs font-semibold text-gray-500">Location Broadcast</span>
           </div>
-          <div className="w-px h-5 bg-white/10" />
+          <div className="w-px h-8 bg-gray-300" />
           <div className="text-right">
-            <div className={`text-[9px] font-display font-bold uppercase tracking-widest mb-1 ${online ? 'text-green-400' : 'text-white/20'}`}>
-              {online ? 'Seva Sakriya' : 'Signal Offline'}
+            <div className={`text-xs font-bold uppercase tracking-widest mb-1 ${online ? 'text-blue-600' : 'text-gray-400'}`}>
+              {online ? 'Status: Available' : 'Status: Offline'}
             </div>
-            <div className="text-[11px] font-mono font-bold text-white/40">{online ? 'SAMPARK MEIN' : 'DISCONNECTED'}</div>
+            <button 
+              onClick={() => setOnline(!online)}
+              className={`text-xs font-bold uppercase tracking-widest px-3 py-1 border transition-colors ${online ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100' : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'}`}
+            >
+              Toggle Status
+            </button>
           </div>
-          <Switch 
-            checked={online} 
-            onChange={(e) => setOnline(e.target.checked)} 
-            className="!text-secondary-container"
-          />
         </div>
       </div>
 
-      <Grid container spacing={4}>
-        <Grid item xs={12} lg={8}>
+      <div className="flex-1 flex justify-center min-h-0 px-4 md:px-0">
+        <div className="w-full max-w-4xl h-full flex flex-col overflow-y-auto scrollbar-hide pb-6 gap-6">
           {/* Dispatch Area */}
-          <motion.div 
-            whileHover={{ scale: 1.01 }}
-            className={`glass-panel p-8 md:p-12 rounded-[2.5rem] relative overflow-hidden transition-all duration-500 border group ${missions.length > 0 ? 'border-secondary-container/30' : 'border-white/5'}`}
-          >
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+          <div className={`bg-white shrink-0 p-8 md:p-12 relative overflow-hidden transition-all duration-300 border ${missions.length > 0 ? 'border-blue-300 shadow-sm' : 'border-gray-200'}`}>
+            <div className="absolute top-0 right-0 p-8 opacity-5">
               <Signal size={200} strokeWidth={0.5} />
             </div>
 
             <div className="relative z-10">
               <div className="flex items-center gap-4 mb-8">
-                <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 ${missions.length > 0 ? 'text-secondary-container' : 'text-white/20'}`}>
+                <div className={`p-4 border ${missions.length > 0 ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-gray-50 border-gray-200 text-gray-400'}`}>
                   <Target size={32} />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-display font-black uppercase tracking-tight">
-                    {missions.length > 0 ? `${missions.length} Seva Abhiyan Identified` : 'Environment Scan Active'}
+                  <h2 className="text-2xl font-bold uppercase tracking-tight text-gray-900">
+                    {missions.length > 0 ? `${missions.length} Optimal Task(s) Found` : 'Scanning for Tasks...'}
                   </h2>
-                  <p className="text-[10px] text-white/40 font-mono uppercase tracking-widest">Global Positioning Sync: NOMINAL</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-widest mt-1 font-semibold">Proximity Matching: Active</p>
                 </div>
               </div>
 
               <div className="max-w-md">
-                <p className="text-sm text-white/60 mb-10 leading-relaxed font-sans uppercase tracking-tight">
+                <p className="text-sm text-gray-600 mb-10 leading-relaxed font-medium">
                   {missions.length > 0 
-                    ? 'Neural layer has identified high-impact requirements matching your coordinates. Authorize extraction protocols below.' 
-                    : 'Standing by for strategic signals. Maintain proximity to the tactical hub for faster response times.'}
+                    ? 'The algorithm has identified high-priority tasks near your current location matching your skills. Review and accept deployment below.' 
+                    : 'Standing by for assignments. Keep your location services active to receive the best matches when emergencies occur.'}
                 </p>
 
                 <button 
@@ -183,105 +170,42 @@ export default function VolunteerDashboard() {
                     setActiveMission(missions[0]);
                     setShowMission(true);
                   }}
-                  className={`px-10 py-5 rounded-2xl font-display text-xs tracking-[0.2em] font-black uppercase transition-all flex items-center gap-4 ${
+                  className={`px-8 py-4 text-sm font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-4 w-full sm:w-auto ${
                     missions.length > 0 
-                    ? 'bg-white text-black hover:bg-secondary-container shadow-[0_0_30px_rgba(255,255,255,0.1)] active:scale-95' 
-                    : 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm' 
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
                   }`}
                 >
-                  {missions.length > 0 ? 'Abhiyan Shuru Karein' : 'Signal Scan...'}
+                  {missions.length > 0 ? 'Review Deployment' : 'Awaiting Assignment'}
                   <ChevronRight size={18} />
                 </button>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           <div className="mt-12">
-            <h3 className="font-display text-lg font-black uppercase tracking-tighter mb-8">Completed Operations</h3>
+            <h3 className="text-lg font-bold uppercase tracking-wide text-gray-900 mb-6">Completed Operations</h3>
             <div className="space-y-4">
               {[1, 2].map((i) => (
-                <div key={i} className="glass-panel p-6 rounded-2xl border border-white/5 group hover:border-white/20 transition-all flex items-center justify-between">
+                <div key={i} className="bg-white p-6 border border-gray-200 hover:border-gray-300 transition-colors flex items-center justify-between shadow-sm">
                   <div className="flex items-center gap-6">
-                    <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-green-400/40 group-hover:text-green-400 transition-colors">
+                    <div className="w-12 h-12 bg-green-50 border border-green-100 flex items-center justify-center text-green-600">
                       <CheckCircle2 size={24} />
                     </div>
                     <div>
-                      <div className="text-xs font-display font-bold uppercase tracking-widest mb-1">Tactical Extraction • Sector {i * 12}</div>
-                      <div className="text-[10px] font-mono text-white/20 uppercase">PROTOCOL COMPLIANT • 0{i}:14 HRS</div>
+                      <div className="text-sm font-bold uppercase tracking-wide text-gray-900 mb-1">Field Support • Sector {i * 12}</div>
+                      <div className="text-xs text-gray-500 uppercase font-semibold">Task Completed • 0{i}:14 HRS</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-display font-black text-secondary-container tracking-tighter">+{i * 120} XP</div>
+                    <div className="text-sm font-bold text-blue-600 tracking-tight">+{i * 120} XP</div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        </Grid>
-
-        <Grid item xs={12} lg={4}>
-          <div className="flex flex-col gap-6">
-            {/* Progression */}
-            <div className="glass-panel p-8 rounded-[2rem] border border-white/10 relative overflow-hidden">
-               <div className="flex items-center justify-between mb-8">
-                  <h3 className="font-display text-lg font-black uppercase tracking-tighter">Seva Points (Progress)</h3>
-                  <Zap size={18} className="text-secondary-container" />
-               </div>
-               
-               <div className="mb-10">
-                 <div className="flex justify-between items-end mb-3">
-                   <span className="text-[10px] font-display font-bold uppercase tracking-[0.2em] text-white/30">Agla Pad (Milestone): Seva Ratna</span>
-                   <span className="text-sm font-mono font-black tracking-tighter text-secondary-container">68%</span>
-                 </div>
-                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: '68%' }}
-                      className="h-full bg-secondary-container shadow-[0_0_20px_rgba(0,186,199,0.5)]"
-                    />
-                 </div>
-                 <div className="flex justify-between mt-2 font-mono text-[9px] uppercase tracking-widest text-white/20">
-                   <span>2,480 PTS</span>
-                   <span>5,000 PTS</span>
-                 </div>
-               </div>
-
-               <div className="grid grid-cols-2 gap-3 mb-8">
-                 {[1, 2, 3, 4].map(i => (
-                   <div key={i} className="p-4 rounded-xl bg-white/5 border border-white/5 text-center group hover:bg-white/10 transition-colors">
-                     <div className="text-2xl mb-2 opacity-60 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0">
-                       {i === 1 ? '🥇' : i === 2 ? '⚡' : i === 3 ? '🧡' : '🤝'}
-                     </div>
-                     <div className="text-[8px] font-display font-bold uppercase tracking-widest text-white/30">{i === 1 ? 'Pratham' : i === 2 ? 'Gati' : i === 3 ? 'Kalyan' : 'Sathi'}</div>
-                   </div>
-                 ))}
-               </div>
-
-               <div className="pt-6 border-t border-white/5 flex justify-between items-center">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="w-8 h-8 rounded-full border-2 border-black bg-white/10 overflow-hidden">
-                        <img src={`https://i.pravatar.cc/150?u=${i}`} className="w-full h-full object-cover grayscale" />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="text-[9px] font-mono text-white/40 uppercase font-bold tracking-tight">12 Sathis Nearby</div>
-               </div>
-            </div>
-
-            {/* Weather Alert */}
-            <div className="glass-panel p-8 rounded-[2rem] border border-red-500/20 bg-red-500/5">
-              <div className="flex items-center gap-3 mb-4">
-                <ShieldAlert size={20} className="text-red-400" />
-                <h3 className="font-display text-xs font-black uppercase tracking-[0.2em] text-red-400">Aapda Chetavani</h3>
-              </div>
-              <p className="text-[11px] text-white/60 font-mono uppercase leading-relaxed font-bold tracking-tight">
-                Northwest Bharat mein khatre ke sanket. Kripya savdhan rahein aur emergency equipment taiyaar rakhein.
-              </p>
-            </div>
-          </div>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Mission Modal */}
       <Dialog 
@@ -289,61 +213,57 @@ export default function VolunteerDashboard() {
         onClose={() => setShowMission(false)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ className: "!bg-[#000] !rounded-[2.5rem] !border !border-white/10 !overflow-hidden relative" }}
+        PaperProps={{ className: "!bg-white !rounded-none !border !border-gray-200 !shadow-lg relative" }}
       >
         <DialogContent className="!p-0">
-          <div className="h-48 bg-white/5 relative">
-            <img 
-              src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop" 
-              className="w-full h-full object-cover opacity-20 grayscale"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
+          <div className="h-40 bg-gray-100 relative border-b border-gray-200">
+            <div className="absolute inset-0 bg-blue-900/10"></div>
             <IconButton 
               onClick={() => setShowMission(false)} 
-              className="!absolute !top-4 !right-4 !bg-black/50 !text-white hover:!bg-white hover:!text-black transition-all"
+              className="!absolute !top-4 !right-4 !bg-white !text-gray-900 hover:!bg-gray-100 border border-gray-200 !rounded-none"
             >
               <X size={16} />
             </IconButton>
           </div>
           
-          <div className="p-10 pt-4">
+          <div className="p-8">
             <div className="mb-8">
-              <div className="text-[10px] font-display font-bold uppercase tracking-[0.3em] text-secondary-container mb-2">Seva Ka Avsar</div>
-              <h3 className="text-3xl font-display font-black uppercase tracking-tighter leading-none mb-4">
-                {activeMission?.needType?.[0] || 'Aapda'} • {activeMission?.location || 'SECTOR RADIAL'}
+              <div className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">Deployment Opportunity</div>
+              <h3 className="text-2xl font-bold uppercase tracking-tight leading-tight mb-4 text-gray-900">
+                {activeMission?.needType?.[0] || 'Emergency'} Task • {activeMission?.location || 'SECTOR RADIAL'}
               </h3>
               
-              <div className="flex flex-wrap gap-2">
-                <div className="px-3 py-1 bg-white/5 rounded-lg border border-white/10 flex items-center gap-2 text-[9px] font-mono uppercase text-white/40">
-                  <MapPin size={10} />
-                  Door: 2.1km
+              <div className="flex flex-wrap gap-3">
+                <div className="px-3 py-1 bg-gray-50 border border-gray-200 flex items-center gap-2 text-xs font-bold uppercase text-gray-600">
+                  <MapPin size={12} />
+                  Distance: 2.1km
                 </div>
-                <div className="px-3 py-1 bg-white/5 rounded-lg border border-white/10 flex items-center gap-2 text-[9px] font-mono uppercase text-secondary-container font-bold">
-                  <Activity size={10} />
-                  Priority Score: {activeMission?.urgencyScore?.toFixed(1) || '0.0'}
+                <div className="px-3 py-1 bg-blue-50 border border-blue-200 flex items-center gap-2 text-xs font-bold uppercase text-blue-700">
+                  <Activity size={12} />
+                  Urgency: {activeMission?.urgencyScore?.toFixed(1) || 'Critical'}
                 </div>
               </div>
             </div>
 
-            <p className="text-[11px] text-white/60 font-mono uppercase leading-relaxed mb-10 border-l border-white/10 pl-4 py-2 font-bold tracking-tight">
-              {activeMission?.text || 'Tactical assessment suggests field deployment required for localized extraction. Environmental factors elevated.'}
+            <p className="text-sm text-gray-700 leading-relaxed mb-8 border-l-4 border-blue-600 pl-4 py-1 font-medium">
+              {activeMission?.text || 'Automated assessment suggests immediate field deployment required to resolve critical bottlenecks in the area.'}
             </p>
 
             <div className="space-y-4">
               <button 
                 onClick={() => handleAcceptMission(activeMission?.id)}
-                className="w-full py-5 rounded-2xl bg-white text-black font-display text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-secondary-container transition-all active:scale-95 shadow-[0_0_40px_rgba(255,255,255,0.1)]"
+                className="w-full py-4 bg-blue-600 text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-colors shadow-sm"
               >
-                Abhiyan Swikaar Karein
+                Accept Deployment
                 <Navigation size={18} />
               </button>
               
               <div className="flex gap-4">
-                <button className="flex-1 py-4 rounded-xl border border-white/10 font-display text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 transition-all">
-                  Comms Log
+                <button className="flex-1 py-3 border border-gray-300 text-xs font-bold uppercase tracking-widest text-gray-600 hover:bg-gray-50 transition-colors">
+                  Details
                 </button>
-                <button className="flex-1 py-4 rounded-xl border border-white/10 font-display text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 transition-all">
-                  Unit Intel
+                <button className="flex-1 py-3 border border-gray-300 text-xs font-bold uppercase tracking-widest text-gray-600 hover:bg-gray-50 transition-colors">
+                  Contact
                 </button>
               </div>
             </div>

@@ -1,104 +1,62 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500;600;700;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Google+Sans:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Outfit", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Google Sans", "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Google Sans", "Open Sans", sans-serif;
   
-  /* Requested Palette */
-  --color-tertiary-fixed: #ffdad5;
-  --color-surface-variant: #353434;
-  --color-secondary-fixed: #7df4ff;
-  --color-on-primary-container: #636565;
-  --color-surface-dim: #141313;
-  --color-on-tertiary-container: #ca0a0f;
-  --color-surface-container: #201f1f;
-  --color-surface-tint: #c6c6c7;
-  --color-outline: #8e9192;
-  --color-on-tertiary-fixed-variant: #930005;
-  --color-tertiary-container: #ffdad5;
-  --color-secondary-container: #00eefc;
-  --color-on-surface: #e5e2e1;
-  --color-inverse-on-surface: #313030;
-  --color-on-surface-variant: #c4c7c8;
-  --color-on-primary-fixed-variant: #454747;
-  --color-surface-container-lowest: #0e0e0e;
-  --color-on-secondary: #00363a;
-  --color-on-tertiary: #690003;
-  --color-on-primary-fixed: #1a1c1c;
-  --color-tertiary: #ffffff;
-  --color-on-secondary-fixed: #002022;
-  --color-secondary: #d3fbff;
-  --color-on-primary: #2f3131;
-  --color-surface: #141313;
-  --color-on-secondary-fixed-variant: #004f54;
-  --color-surface-container-low: #1c1b1b;
-  --color-background: #000000;
-  --color-tertiary-fixed-dim: #ffb4aa;
-  --color-secondary-fixed-dim: #00dbe9;
-  --color-inverse-primary: #5d5f5f;
-  --color-on-background: #e5e2e1;
-  --color-surface-container-highest: #353434;
-  --color-surface-bright: #3a3939;
-  --color-on-error: #690005;
-  --color-on-tertiary-fixed: #410001;
-  --color-primary-fixed-dim: #c6c6c7;
-  --color-surface-container-high: #2a2a2a;
-  --color-primary-container: #e2e2e2;
-  --color-on-error-container: #ffdad6;
-  --color-primary-fixed: #e2e2e2;
-  --color-primary: #ffffff;
-  --color-on-secondary-container: #00686f;
-  --color-inverse-surface: #e5e2e1;
-  --color-error: #ffb4ab;
-  --color-outline-variant: #444748;
-  --color-error-container: #93000a;
+  /* Light Theme Palette */
+  --color-background: #ffffff;
+  --color-on-background: #1f2937;
+  --color-surface: #f9fafb;
+  --color-on-surface: #111827;
+  --color-primary: #1a73e8; /* Google Blue */
+  --color-on-primary: #ffffff;
+  --color-secondary: #34a853; /* Google Green */
+  --color-error: #ea4335; /* Google Red */
+  --color-warning: #fbbc04; /* Google Yellow */
+  --color-outline: #e5e7eb;
 
   /* Typography shortcuts */
-  --font-h1: "Outfit", sans-serif;
-  --font-h2: "Outfit", sans-serif;
-  --font-h3: "Outfit", sans-serif;
-  --font-label-caps: "Outfit", sans-serif;
-  --font-mono-data: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  --font-body-lg: "Outfit", sans-serif;
-  --font-body-md: "Outfit", sans-serif;
+  --font-h1: "Google Sans", sans-serif;
+  --font-h2: "Google Sans", sans-serif;
+  --font-h3: "Google Sans", sans-serif;
+  --font-body-lg: "Open Sans", sans-serif;
+  --font-body-md: "Open Sans", sans-serif;
 }
 
 @layer base {
   body {
-    @apply bg-background text-on-background font-sans antialiased selection:bg-secondary-container selection:text-black;
+    @apply bg-background text-on-background font-sans antialiased selection:bg-primary/20 selection:text-primary;
   }
 }
 
 @layer utilities {
   .grid-pattern {
-    background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-image: linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
     background-size: 40px 40px;
   }
   
-  .glass-panel {
-    @apply bg-[#111111]/70 backdrop-blur-3xl border border-white/10;
-  }
+
 
   .perspective-1000 {
     perspective: 1500px;
   }
 
-  .pulse-cyan {
+  .pulse-red {
     position: relative;
   }
   
-  .pulse-cyan::after {
+  .pulse-red::after {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    border: 1px solid #00eefc;
-    border-radius: 50%;
+    border: 1px solid #ea4335;
+    border-radius: 0; /* No rounded corners */
     opacity: 0;
     animation: pulse-ring 2s infinite;
   }
