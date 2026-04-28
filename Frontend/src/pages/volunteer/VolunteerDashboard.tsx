@@ -30,6 +30,7 @@ export default function VolunteerDashboard() {
   const [missions, setMissions] = React.useState<any[]>([]);
   const [completedMissions, setCompletedMissions] = React.useState<any[]>([]);
   const [activeMission, setActiveMission] = React.useState<any>(null);
+  const [currentActiveMission, setCurrentActiveMission] = React.useState<any>(null);
   const [showMission, setShowMission] = React.useState(false);
   const [gpsError, setGpsError] = React.useState<string | null>(null);
   const [gpsActive, setGpsActive] = React.useState(false);
@@ -98,9 +99,25 @@ export default function VolunteerDashboard() {
       console.error("Volunteer completed snapshot error:", error);
     });
 
+    // Listen to currently active dispatched mission
+    const qActive = query(
+      collection(db, 'missions'),
+      where('volunteerId', '==', user.uid),
+      where('status', '==', 'DISPATCHED')
+    );
+
+    const unsubActive = onSnapshot(qActive, (snapshot) => {
+      if (!snapshot.empty) {
+        setCurrentActiveMission({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+      } else {
+        setCurrentActiveMission(null);
+      }
+    });
+
     return () => {
       unsubPending();
       unsubCompleted();
+      unsubActive();
     };
   }, [user, loading]);
 
@@ -137,11 +154,12 @@ export default function VolunteerDashboard() {
 
   const handleCompleteMission = async (missionId: string) => {
     try {
-      const mission = completedMissions.find(m => m.id === missionId) || activeMission;
+      const mission = currentActiveMission || completedMissions.find(m => m.id === missionId);
       if (!mission) return;
 
       const missionRef = doc(db, 'missions', missionId);
       const reportRef = doc(db, 'reports', mission.reportId);
+      const userRef = doc(db, 'users', user.uid);
 
       await Promise.all([
         updateDoc(missionRef, {
@@ -152,6 +170,9 @@ export default function VolunteerDashboard() {
         updateDoc(reportRef, {
           status: 'RESOLVED',
           updatedAt: serverTimestamp()
+        }),
+        updateDoc(userRef, {
+          currentMissionId: null
         })
       ]);
     } catch (error) {
@@ -203,41 +224,76 @@ export default function VolunteerDashboard() {
             </div>
 
             <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-8">
-                <div className={`p-4 border ${missions.length > 0 ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-gray-50 border-gray-200 text-gray-400'}`}>
-                  <Target size={32} />
+              {currentActiveMission ? (
+                // ACTIVE DEPLOYMENT VIEW
+                <div className="bg-blue-50 border border-blue-200 p-8 shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-blue-600 text-white rounded-full animate-pulse">
+                        <Navigation size={24} />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-blue-600 uppercase tracking-widest">Active Deployment</div>
+                        <h3 className="text-xl font-bold uppercase tracking-tight text-gray-900 mt-1">
+                          {currentActiveMission.type || 'Emergency'} Task
+                        </h3>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mb-6 p-4 bg-white border border-blue-100">
+                    <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Target Location</div>
+                    <div className="font-semibold text-gray-900">{currentActiveMission.locationDescription || 'Unknown'}</div>
+                    <div className="mt-2 text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Severity / Urgency</div>
+                    <div className="font-semibold text-red-600">{currentActiveMission.urgencyScore?.toFixed(1) || 'High'}</div>
+                  </div>
+                  <button 
+                    onClick={() => handleCompleteMission(currentActiveMission.id)}
+                    className="w-full py-4 bg-green-600 text-white text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-green-700 transition-colors shadow-sm"
+                  >
+                    <CheckCircle2 size={20} />
+                    Mark Issue as Resolved
+                  </button>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold uppercase tracking-tight text-gray-900">
-                    {missions.length > 0 ? `${missions.length} Optimal Task(s) Found` : 'Scanning for Tasks...'}
-                  </h2>
-                  <p className="text-xs text-gray-500 uppercase tracking-widest mt-1 font-semibold">Proximity Matching: Active</p>
-                </div>
-              </div>
+              ) : (
+                // PENDING TASKS VIEW
+                <>
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className={`p-4 border ${missions.length > 0 ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-gray-50 border-gray-200 text-gray-400'}`}>
+                      <Target size={32} />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold uppercase tracking-tight text-gray-900">
+                        {missions.length > 0 ? `${missions.length} Optimal Task(s) Found` : 'Scanning for Tasks...'}
+                      </h2>
+                      <p className="text-xs text-gray-500 uppercase tracking-widest mt-1 font-semibold">Proximity Matching: Active</p>
+                    </div>
+                  </div>
 
-              <div className="max-w-md">
-                <p className="text-sm text-gray-600 mb-10 leading-relaxed font-medium">
-                  {missions.length > 0 
-                    ? 'The algorithm has identified high-priority tasks near your current location matching your skills. Review and accept deployment below.' 
-                    : 'Standing by for assignments. Keep your location services active to receive the best matches when emergencies occur.'}
-                </p>
+                  <div className="max-w-md">
+                    <p className="text-sm text-gray-600 mb-10 leading-relaxed font-medium">
+                      {missions.length > 0 
+                        ? 'The algorithm has identified high-priority tasks near your current location matching your skills. Review and accept deployment below.' 
+                        : 'Standing by for assignments. Keep your location services active to receive the best matches when emergencies occur.'}
+                    </p>
 
-                <button 
-                  disabled={missions.length === 0}
-                  onClick={() => {
-                    setActiveMission(missions[0]);
-                    setShowMission(true);
-                  }}
-                  className={`px-8 py-4 text-sm font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-4 w-full sm:w-auto ${
-                    missions.length > 0 
-                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm' 
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
-                  }`}
-                >
-                  {missions.length > 0 ? 'Review Deployment' : 'Awaiting Assignment'}
-                  <ChevronRight size={18} />
-                </button>
-              </div>
+                    <button 
+                      disabled={missions.length === 0}
+                      onClick={() => {
+                        setActiveMission(missions[0]);
+                        setShowMission(true);
+                      }}
+                      className={`px-8 py-4 text-sm font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-4 w-full sm:w-auto ${
+                        missions.length > 0 
+                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm' 
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                      }`}
+                    >
+                      {missions.length > 0 ? 'Review Deployment' : 'Awaiting Assignment'}
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
