@@ -78,7 +78,7 @@ export default function LiveHeatmap() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const live = snapshot.docs
         .map(d => ({ id: d.id, ...d.data() } as any))
-        .filter(r => r.location?.lat && r.location?.lng)
+        .filter(r => r.location?.lat && r.location?.lng && r.status !== 'RESOLVED')
         .map(r => ({
           id: r.id,
           lat: r.location.lat,
