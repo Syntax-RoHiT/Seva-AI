@@ -34,18 +34,28 @@ export default function VolunteerDashboard() {
   const [gpsError, setGpsError] = React.useState<string | null>(null);
   const [gpsActive, setGpsActive] = React.useState(false);
 
-  // Start GPS tracking when user is online
+  // Start GPS tracking when user is online and update Firestore
   React.useEffect(() => {
     if (!user || loading) return;
+    
+    const userRef = doc(db, 'users', user.uid);
+    
     if (online) {
       startGPSTracking(user.uid, (err) => setGpsError(err));
       setGpsActive(true);
+      updateDoc(userRef, { online: true }).catch(console.error);
     } else {
       stopGPSTracking(user.uid);
       setGpsActive(false);
+      updateDoc(userRef, { online: false }).catch(console.error);
     }
+    
     return () => {
-      if (user) stopGPSTracking(user.uid);
+      if (user) {
+        stopGPSTracking(user.uid);
+        // We do not immediately set offline on unmount to prevent flickering, 
+        // but could if strict offline status is required.
+      }
     };
   }, [online, user, loading]);
 

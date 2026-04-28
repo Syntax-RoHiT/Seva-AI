@@ -4,7 +4,9 @@ const { vertexAIReason } = require('./services/vertexAIService');
 const { getWeatherRisk } = require('./services/weatherService');
 const { hungarian } = require('./services/hungarianService');
 
-admin.initializeApp();
+admin.initializeApp({
+  projectId: process.env.GOOGLE_CLOUD_PROJECT || 'seva-ai-a93e4'
+});
 const db = admin.firestore();
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -104,7 +106,7 @@ app.post('/swarm-cycle', async (req, res) => {
   try {
     console.log(`[SEVAEngine] Swarm cycle initiated. Checking volunteers and reports...`);
     const [volSnap, repSnap] = await Promise.all([
-      db.collection('volunteers').where('online', '==', true).where('currentMissionId', '==', null).get(),
+      db.collection('users').where('role', '==', 'VOLUNTEER').where('online', '==', true).where('currentMissionId', '==', null).get(),
       db.collection('reports').where('status', '==', 'PENDING').orderBy('urgencyScore', 'desc').limit(30).get(),
     ]);
 
@@ -131,7 +133,7 @@ app.post('/swarm-cycle', async (req, res) => {
       const r = reports[reportIdx];
       const mRef = db.collection('missions').doc();
       batch.set(mRef, {
-        reportId: r.id, volunteerId: v.id, volunteerName: v.name,
+        reportId: r.id, volunteerId: v.id, volunteerName: v.displayName || v.name || 'Volunteer',
         urgencyScore: r.urgencyScore, severity: r.severity,
         type: (r.needType || ['GENERAL'])[0],
         location: r.location || null,
@@ -141,7 +143,7 @@ app.post('/swarm-cycle', async (req, res) => {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       batch.update(db.doc(`reports/${r.id}`), { status: 'PROCESSING', assignedVolunteerId: v.id });
-      batch.update(db.doc(`volunteers/${v.id}`), { currentMissionId: mRef.id });
+      batch.update(db.doc(`users/${v.id}`), { currentMissionId: mRef.id });
       matched++;
     });
     await batch.commit();

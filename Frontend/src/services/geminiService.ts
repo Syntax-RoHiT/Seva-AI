@@ -58,7 +58,7 @@ const responseSchema = {
 export const parseIncidentReport = async (text: string): Promise<ParsedReport> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     contents: `Analyze this disaster relief report and extract structured data: "${text}"`,
     config: {
       responseMimeType: "application/json",
@@ -88,7 +88,7 @@ export const parseIncidentReport = async (text: string): Promise<ParsedReport> =
 export const parseImageReport = async (base64Image: string, mimeType: string = "image/jpeg"): Promise<ParsedReport> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     contents: [
       {
         parts: [
@@ -138,7 +138,7 @@ export const parseMultipleImages = async (images: { base64: string; mimeType: st
   }));
 
   const response = await ai.models.generateContent({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     contents: [
       {
         parts: [
@@ -175,7 +175,7 @@ export const parseMultipleImages = async (images: { base64: string; mimeType: st
 export const parseVoiceNote = async (audioBase64: string, mimeType: string): Promise<ParsedReport> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     contents: [
       {
         parts: [
@@ -215,7 +215,7 @@ export const parseVoiceNote = async (audioBase64: string, mimeType: string): Pro
 export const chatWithAssistant = async (message: string, history: any[] = []) => {
   const ai = getAI();
   const chat = ai.chats.create({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     history: history,
     config: {
       systemInstruction: `You are SevaAI Tactical Assistant, a high-tech mission control AI for disaster relief. 
@@ -233,7 +233,7 @@ export const summarizeSituation = async (reports: any[]) => {
   
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     contents: `Summarize the current situation and provide 3 tactical priority actions:\n${reportsText}`,
     config: {
       systemInstruction: "You are SevaAI Tactical Oversight. Provide a high-level sitrep. Be concise."
