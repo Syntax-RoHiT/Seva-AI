@@ -19,9 +19,7 @@ export default function AwaitingApprovalPage() {
 
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-blue-600 flex items-center justify-center">
-              <ShieldCheck size={20} className="text-white" />
-            </div>
+            <img src="/seva-ai-logo.png" alt="Seva AI Logo" className="w-10 h-10 object-contain" />
             <div className="text-xl font-bold tracking-tight text-blue-600">SEVA AI</div>
           </div>
 

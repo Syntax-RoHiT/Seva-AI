@@ -145,9 +145,7 @@ export default function Shell({ children, role }: ShellProps) {
   const Sidebar = () => (
     <div className="h-full flex flex-col bg-gray-50 border-r border-gray-200 pt-8">
       <div className="px-8 mb-10 flex items-center gap-3">
-        <div className="w-8 h-8 bg-blue-600 text-white flex items-center justify-center shadow-sm">
-          <ShieldCheck size={18} />
-        </div>
+        <img src="/seva-ai-logo.png" alt="Seva AI Logo" className="w-8 h-8 object-contain" />
         <div className="font-bold tracking-tight text-xl text-gray-900">SEVA AI</div>
       </div>
 

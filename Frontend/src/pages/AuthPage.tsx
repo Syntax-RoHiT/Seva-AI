@@ -102,9 +102,7 @@ export default function AuthPage({ initialTab = 'login' }: { initialTab?: Tab })
         </div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-16">
-            <div className="w-10 h-10 bg-blue-600 flex items-center justify-center">
-              <ShieldCheck size={22} className="text-white" />
-            </div>
+            <img src="/seva-ai-logo.png" alt="Seva AI Logo" className="w-10 h-10 object-contain" />
             <div className="text-2xl font-bold tracking-tight text-white">SEVA AI</div>
           </div>
           <h2 className="text-4xl font-bold text-white leading-tight mb-6 uppercase tracking-tight">
@@ -134,9 +132,7 @@ export default function AuthPage({ initialTab = 'login' }: { initialTab?: Tab })
         <div className="w-full max-w-md">
           {/* Logo (mobile only) */}
           <div className="lg:hidden flex items-center gap-3 mb-10 justify-center">
-            <div className="w-10 h-10 bg-blue-600 flex items-center justify-center">
-              <ShieldCheck size={22} className="text-white" />
-            </div>
+            <img src="/seva-ai-logo.png" alt="Seva AI Logo" className="w-10 h-10 object-contain" />
             <div className="text-2xl font-bold tracking-tight text-gray-900">SEVA AI</div>
           </div>
 

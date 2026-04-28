@@ -6,7 +6,10 @@ import {
   Users, 
   Brain, 
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  Database,
+  Cloud,
+  Cpu
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -37,23 +40,12 @@ export default function LandingPage() {
           className="text-2xl font-bold tracking-tight text-blue-600 cursor-pointer flex items-center gap-2" 
           onClick={() => navigate('/')}
         >
-          <ShieldAlert size={24} />
+          <img src="/seva-ai-logo.png" alt="Seva AI Logo" className="w-8 h-8 object-contain" />
           SEVA AI
         </div>
         
-        <nav className="hidden md:flex items-center gap-8">
-          <a href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Detailed Guide Flow</a>
-          <Link to="/heatmap" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Live Map</Link>
-        </nav>
 
         <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate('/report')}
-            className="hidden sm:flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 font-medium text-sm border border-red-200 hover:bg-red-600 hover:text-white transition-colors"
-          >
-            <AlertTriangle size={16} />
-            Report Need
-          </button>
           
           {user ? (
             <div className="flex items-center gap-3">
@@ -103,22 +95,37 @@ export default function LandingPage() {
             >
               Report Emergency <ArrowRight size={18} />
             </button>
-            <button 
-              onClick={() => navigate('/heatmap')}
-              className="bg-white text-gray-900 border border-gray-300 px-8 py-3 font-semibold hover:bg-gray-50 transition-colors flex items-center gap-2"
-            >
-              View Live Heatmap <Map size={18} />
-            </button>
           </div>
         </div>
         
         <div className="flex-1 relative w-full">
-          <div className="aspect-[4/3] bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden relative">
-             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-             <div className="relative z-10 text-center space-y-4">
-                <Brain size={64} className="mx-auto text-blue-600" />
-                <p className="font-medium text-gray-500 uppercase tracking-widest text-sm">Seva Engine Active</p>
-             </div>
+          <div className="aspect-[4/3] flex items-center justify-center overflow-hidden relative">
+             <img 
+               src="https://static.vecteezy.com/system/resources/thumbnails/001/875/313/small/social-support-activities-free-vector.jpg" 
+               alt="Social Support Activities" 
+               className="w-full h-full object-cover"
+             />
+          </div>
+        </div>
+      </section>
+
+      {/* Powered By Section */}
+      <section className="py-12 bg-white border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-8">Powered By Google Cloud Services</p>
+          <div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-70 hover:opacity-100 transition-opacity duration-300">
+            <div className="flex items-center gap-3 font-bold text-gray-600">
+              <Database className="text-amber-500" size={24} /> Firebase
+            </div>
+            <div className="flex items-center gap-3 font-bold text-gray-600">
+              <Cloud className="text-blue-500" size={24} /> Google Cloud Run
+            </div>
+            <div className="flex items-center gap-3 font-bold text-gray-600">
+              <Cpu className="text-purple-500" size={24} /> Vertex AI
+            </div>
+            <div className="flex items-center gap-3 font-bold text-gray-600">
+              <Brain className="text-green-500" size={24} /> Gemma Edge AI
+            </div>
           </div>
         </div>
       </section>
@@ -182,7 +189,7 @@ export default function LandingPage() {
       <footer className="bg-white border-t border-gray-200 py-8 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2 text-gray-900 font-bold">
-            <ShieldAlert size={20} className="text-blue-600" />
+            <img src="/seva-ai-logo.png" alt="Seva AI Logo" className="w-6 h-6 object-contain" />
             SEVA AI
           </div>
           <p className="text-sm text-gray-500">
