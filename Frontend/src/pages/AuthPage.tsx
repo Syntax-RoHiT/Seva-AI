@@ -24,6 +24,7 @@ export default function AuthPage({ initialTab = 'login' }: { initialTab?: Tab })
   const [signupPassword, setSignupPassword] = useState('');
   const [signupRole, setSignupRole] = useState<UserRole>('NGO_ADMIN');
   const [signupOrg, setSignupOrg] = useState('');
+  const [signupSkills, setSignupSkills] = useState<string[]>([]);
   const [showSignupPw, setShowSignupPw] = useState(false);
   const [signupError, setSignupError] = useState('');
   const [signupLoading, setSignupLoading] = useState(false);
@@ -77,7 +78,7 @@ export default function AuthPage({ initialTab = 'login' }: { initialTab?: Tab })
     if (signupPassword.length < 6) { setSignupError('Password must be at least 6 characters.'); return; }
     setSignupLoading(true);
     try {
-      await signUpWithEmail(signupEmail, signupPassword, signupName, signupRole, signupOrg);
+      await signUpWithEmail(signupEmail, signupPassword, signupName, signupRole, signupOrg, signupSkills);
       navigate('/awaiting-approval');
     } catch (err: any) {
       const code = err?.code || '';
@@ -345,6 +346,33 @@ export default function AuthPage({ initialTab = 'login' }: { initialTab?: Tab })
                         className="w-full bg-white border border-gray-200 pl-11 pr-4 py-3 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all"
                       />
                     </div>
+                  </div>
+                )}
+
+                {signupRole === 'VOLUNTEER' && (
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Your Skills <span className="text-red-500">*</span></label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {['Medical', 'Rescue', 'Logistics', 'Shelter', 'Food', 'Water', 'Communication', 'Search'].map(skill => (
+                        <button
+                          key={skill}
+                          type="button"
+                          onClick={() => setSignupSkills(prev =>
+                            prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
+                          )}
+                          className={`px-3 py-2 text-xs font-bold uppercase tracking-wider border transition-all text-left ${
+                            signupSkills.includes(skill)
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                          }`}
+                        >
+                          {skill}
+                        </button>
+                      ))}
+                    </div>
+                    {signupSkills.length === 0 && (
+                      <p className="text-[10px] text-red-500 font-semibold mt-1">Select at least one skill</p>
+                    )}
                   </div>
                 )}
 

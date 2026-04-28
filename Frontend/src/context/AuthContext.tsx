@@ -21,7 +21,7 @@ interface AuthContextType {
   approved: boolean;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signUpWithEmail: (email: string, password: string, name: string, role: UserRole, organization?: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, name: string, role: UserRole, organization?: string, skills?: string[]) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signInAsDemo: (role: UserRole) => Promise<void>;
   signOut: () => Promise<void>;
@@ -110,6 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: string,
     role: UserRole,
     organization?: string,
+    skills?: string[],
   ) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
@@ -121,6 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       displayName: name,
       role,
       organization: organization || '',
+      skills: skills || [],
       status: 'PENDING_APPROVAL',
       approved: false,
       createdAt: new Date().toISOString(),
@@ -133,7 +135,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       displayName: name,
       role,
       organization: organization || '',
+      skills: skills || [],
       approved: false,
+      online: false,
+      currentMissionId: null,
       createdAt: new Date().toISOString(),
     });
 

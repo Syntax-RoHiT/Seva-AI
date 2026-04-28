@@ -138,6 +138,19 @@ export default function NGOAdminDashboard() {
     try {
       const baseLat = 28.6139; // Delhi center
       const baseLng = 77.2090;
+      const allSkills = ['Medical', 'Rescue', 'Logistics', 'Shelter', 'Food', 'Water', 'Communication', 'Search'];
+      const skillProfiles = [
+        ['Medical', 'Rescue'],
+        ['Medical', 'Communication'],
+        ['Rescue', 'Search'],
+        ['Logistics', 'Shelter'],
+        ['Food', 'Water'],
+        ['Rescue', 'Logistics'],
+        ['Medical', 'Search'],
+        ['Shelter', 'Food'],
+        ['Communication', 'Logistics'],
+        ['Water', 'Rescue'],
+      ];
       for (let i = 1; i <= 10; i++) {
         const uid = `demo-vol-${Date.now()}-${i}`;
         await setDoc(doc(db, 'users', uid), {
@@ -152,7 +165,7 @@ export default function NGOAdminDashboard() {
             lat: baseLat + (Math.random() - 0.5) * 0.05,
             lng: baseLng + (Math.random() - 0.5) * 0.05
           },
-          skills: ['Medical', 'Rescue'],
+          skills: skillProfiles[(i - 1) % skillProfiles.length],
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
@@ -314,7 +327,7 @@ export default function NGOAdminDashboard() {
                 <TableRow>
                   <TableCell className="!border-gray-200 !text-[10px] !font-bold !uppercase !tracking-widest !text-gray-500">User Details</TableCell>
                   <TableCell className="!border-gray-200 !text-[10px] !font-bold !uppercase !tracking-widest !text-gray-500">Requested Role</TableCell>
-                  <TableCell className="!border-gray-200 !text-[10px] !font-bold !uppercase !tracking-widest !text-gray-500">Organization</TableCell>
+                  <TableCell className="!border-gray-200 !text-[10px] !font-bold !uppercase !tracking-widest !text-gray-500">Skills / Org</TableCell>
                   <TableCell className="!border-gray-200 !text-[10px] !font-bold !uppercase !tracking-widest !text-gray-500 !text-right">Action</TableCell>
                 </TableRow>
               </TableHead>
@@ -330,8 +343,17 @@ export default function NGOAdminDashboard() {
                         {user.role}
                       </span>
                     </TableCell>
-                    <TableCell className="!border-gray-200 text-xs font-semibold text-gray-600 uppercase">
-                      {user.organization || '—'}
+                    <TableCell className="!border-gray-200">
+                      {user.role === 'VOLUNTEER' ? (
+                        <div className="flex flex-wrap gap-1">
+                          {(user.skills || []).map((s: string) => (
+                            <span key={s} className="px-2 py-0.5 bg-green-50 border border-green-200 text-[9px] font-bold uppercase text-green-700">{s}</span>
+                          ))}
+                          {(!user.skills || user.skills.length === 0) && <span className="text-gray-400 text-[10px]">—</span>}
+                        </div>
+                      ) : (
+                        <span className="text-xs font-semibold text-gray-600 uppercase">{user.organization || '—'}</span>
+                      )}
                     </TableCell>
                     <TableCell className="!border-gray-200 !text-right">
                       <div className="flex justify-end gap-2">
