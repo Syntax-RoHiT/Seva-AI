@@ -240,6 +240,29 @@ export default function VolunteerDashboard() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Mission Location Map */}
+                  {currentActiveMission.location?.lat && (
+                    <div className="mb-6 overflow-hidden border border-blue-200">
+                      <iframe
+                        title="Mission Location"
+                        width="100%"
+                        height="200"
+                        style={{ border: 0 }}
+                        src={`https://www.google.com/maps?q=${currentActiveMission.location.lat},${currentActiveMission.location.lng}&z=15&output=embed`}
+                        allowFullScreen
+                      />
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${currentActiveMission.location.lat},${currentActiveMission.location.lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 py-2 bg-blue-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors"
+                      >
+                        <Navigation size={14} /> Open in Google Maps
+                      </a>
+                    </div>
+                  )}
+
                   <div className="mb-6 p-4 bg-white border border-blue-100">
                     <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Target Location</div>
                     <div className="font-semibold text-gray-900">{currentActiveMission.locationDescription || 'Unknown'}</div>
@@ -344,11 +367,24 @@ export default function VolunteerDashboard() {
         PaperProps={{ className: "!bg-white !rounded-none !border !border-gray-200 !shadow-lg relative" }}
       >
         <DialogContent className="!p-0">
-          <div className="h-40 bg-gray-100 relative border-b border-gray-200">
-            <div className="absolute inset-0 bg-blue-900/10"></div>
+          <div className="h-52 bg-gray-100 relative border-b border-gray-200 overflow-hidden">
+            {activeMission?.location?.lat ? (
+              <iframe
+                title="Mission Map"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                src={`https://www.google.com/maps?q=${activeMission.location.lat},${activeMission.location.lng}&z=15&output=embed`}
+                allowFullScreen
+              />
+            ) : (
+              <div className="absolute inset-0 bg-blue-900/10 flex items-center justify-center text-gray-400 text-xs uppercase font-bold tracking-widest">
+                Location Unavailable
+              </div>
+            )}
             <IconButton 
               onClick={() => setShowMission(false)} 
-              className="!absolute !top-4 !right-4 !bg-white !text-gray-900 hover:!bg-gray-100 border border-gray-200 !rounded-none"
+              className="!absolute !top-2 !right-2 !bg-white !text-gray-900 hover:!bg-gray-100 border border-gray-200 !rounded-none"
             >
               <X size={16} />
             </IconButton>

@@ -218,6 +218,13 @@ export default function ReporterPage() {
 
   const handleSubmit = async () => {
     if (!details.trim() && !selectedType && images.length === 0) return;
+    
+    // Location is mandatory
+    if (!location) {
+      setAIStatusMsg('📍 Location lock is required before submitting. Please tap the Location button.');
+      return;
+    }
+    
     setLoading(true);
     setAIStatusMsg('Submitting report...');
     
