@@ -1,4 +1,4 @@
-const fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...args));
+const fetch = typeof globalThis.fetch !== 'undefined' ? globalThis.fetch : (...args) => import('node-fetch').then(({ default: f }) => f(...args));
 
 const MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || '';
 const MAX_RADIUS_KM = 2; // Only match volunteers within 2km (per spec)

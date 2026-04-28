@@ -16,11 +16,17 @@ service cloud.firestore {
     }
 
     function getUserData() {
+      // Use getAfter() if we want to check state after the write, 
+      // but for reading we use get().
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
     function hasRole(role) {
-      return isSignedIn() && (getUserData().role == role || isDemo());
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role || 
+        isDemo()
+      );
     }
 
     function isOwner(userId) {

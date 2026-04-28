@@ -8,12 +8,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-com
 const urlParams = new URLSearchParams(location.search);
 
 firebase.initializeApp({
-  apiKey:            urlParams.get('apiKey')            || self.__FIREBASE_API_KEY__,
-  authDomain:        urlParams.get('authDomain')        || self.__FIREBASE_AUTH_DOMAIN__,
-  projectId:         urlParams.get('projectId')         || self.__FIREBASE_PROJECT_ID__,
-  storageBucket:     urlParams.get('storageBucket')     || self.__FIREBASE_STORAGE_BUCKET__,
-  messagingSenderId: urlParams.get('messagingSenderId') || self.__FIREBASE_MESSAGING_SENDER_ID__,
-  appId:             urlParams.get('appId')             || self.__FIREBASE_APP_ID__,
+  apiKey:            urlParams.get('apiKey')            || self.__FIREBASE_API_KEY__            || '',
+  authDomain:        urlParams.get('authDomain')        || self.__FIREBASE_AUTH_DOMAIN__         || '',
+  projectId:         urlParams.get('projectId')         || self.__FIREBASE_PROJECT_ID__          || '',
+  storageBucket:     urlParams.get('storageBucket')     || self.__FIREBASE_STORAGE_BUCKET__      || '',
+  messagingSenderId: urlParams.get('messagingSenderId') || self.__FIREBASE_MESSAGING_SENDER_ID__ || '',
+  appId:             urlParams.get('appId')             || self.__FIREBASE_APP_ID__             || '',
 });
 
 const messaging = firebase.messaging();

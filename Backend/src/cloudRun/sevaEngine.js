@@ -102,7 +102,7 @@ Output ONLY valid JSON with: { "adjustedSeverity": 1-5, "riskReasoning": "...", 
  */
 app.post('/swarm-cycle', async (req, res) => {
   try {
-    // Fetch available volunteers and open reports
+    console.log(`[SEVAEngine] Swarm cycle initiated. Checking volunteers and reports...`);
     const [volSnap, repSnap] = await Promise.all([
       db.collection('volunteers').where('online', '==', true).where('currentMissionId', '==', null).get(),
       db.collection('reports').where('status', '==', 'PENDING').orderBy('urgencyScore', 'desc').limit(30).get(),
@@ -111,8 +111,10 @@ app.post('/swarm-cycle', async (req, res) => {
     const volunteers = volSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const reports    = repSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
+    console.log(`[SEVAEngine] Found ${volunteers.length} online volunteers and ${reports.length} pending reports.`);
+
     if (volunteers.length === 0 || reports.length === 0) {
-      return res.json({ matched: 0, message: 'No volunteers or reports available' });
+      return res.json({ matched: 0, message: `Insufficient data: ${volunteers.length} volunteers, ${reports.length} reports` });
     }
 
     // Build cost matrix and run Hungarian

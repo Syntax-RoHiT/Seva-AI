@@ -36,9 +36,16 @@ export default function NGOAdminDashboard() {
 
     // 2. Pending Approvals
     const qPending = query(collection(db, 'pendingUsers'), where('status', '==', 'PENDING_APPROVAL'));
-    const unsubPending = onSnapshot(qPending, (snapshot) => {
-      setPendingUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
-    });
+    const unsubPending = onSnapshot(qPending, 
+      (snapshot) => {
+        const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+        console.log(`[NGOAdmin] Found ${users.length} pending approval requests.`);
+        setPendingUsers(users);
+      },
+      (error) => {
+        console.error("[NGOAdmin] Pending users listener failed:", error);
+      }
+    );
 
     // 3. Active Volunteers Count
     const qVols = query(collection(db, 'users'), where('role', '==', 'VOLUNTEER'), where('approved', '==', true));
@@ -99,10 +106,27 @@ export default function NGOAdminDashboard() {
         return;
       }
       
+      // Mark report as processing to avoid multiple dispatches
       await updateDoc(doc(db, 'reports', pendingReport.id), {
-        status: 'DISPATCHED',
+        status: 'PROCESSING',
         updatedAt: serverTimestamp()
       });
+
+      // Create a broadcast mission for volunteers
+      await addDoc(collection(db, 'missions'), {
+        reportId: pendingReport.id,
+        urgencyScore: pendingReport.urgencyScore || 5,
+        severity: pendingReport.severity || 3,
+        type: (pendingReport.needType || ['GENERAL'])[0],
+        locationDescription: pendingReport.locationDescription || 'Unknown',
+        location: pendingReport.location || null,
+        algorithm: 'MANUAL_BROADCAST',
+        status: 'PENDING',
+        volunteerId: null, // Null means broadcast to all available
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
       alert(`Dispatch initiated for Report ID: ${pendingReport.id.substring(0,8)}`);
     } catch (err) {
       console.error(err);
@@ -259,7 +283,7 @@ export default function NGOAdminDashboard() {
               </TableHead>
               <TableBody>
                 {pendingUsers.map(user => (
-                  <TableRow key={user.uid}>
+                  <TableRow key={user.id || user.uid}>
                     <TableCell className="!border-gray-200">
                       <div className="text-xs font-bold text-gray-900 uppercase">{user.displayName}</div>
                       <div className="text-[10px] font-semibold text-gray-500 mt-1">{user.email}</div>
