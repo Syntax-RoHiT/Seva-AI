@@ -34,13 +34,15 @@ export default function NGOAdminDashboard() {
       setTotalProcessedCount(reports.filter(r => r.status === 'RESOLVED').length);
     });
 
-    // 2. Pending Approvals
-    const qPending = query(collection(db, 'pendingUsers'), where('status', '==', 'PENDING_APPROVAL'));
+    // 2. Pending Approvals — fetch ALL, filter out already-processed client-side
+    const qPending = collection(db, 'pendingUsers');
     const unsubPending = onSnapshot(qPending, 
       (snapshot) => {
-        const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-        console.log(`[NGOAdmin] Found ${users.length} pending approval requests.`);
-        setPendingUsers(users);
+        const all = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+        // Show anything that isn't explicitly approved or rejected
+        const pending = all.filter(u => !u.approved && u.status !== 'APPROVED' && u.status !== 'REJECTED');
+        console.log(`[NGOAdmin] Total pendingUsers docs: ${all.length}, showing ${pending.length}`);
+        setPendingUsers(pending);
       },
       (error) => {
         console.error("[NGOAdmin] Pending users listener failed:", error);
@@ -73,7 +75,7 @@ export default function NGOAdminDashboard() {
 
   const handleApprove = async (userId: string) => {
     try {
-      await updateDoc(doc(db, 'pendingUsers', userId), { status: 'APPROVED' });
+      await updateDoc(doc(db, 'pendingUsers', userId), { status: 'APPROVED', approved: true });
       await updateDoc(doc(db, 'users', userId), { approved: true });
     } catch (e) { console.error("Approval failed", e); }
   };
