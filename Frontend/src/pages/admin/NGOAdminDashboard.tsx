@@ -6,7 +6,7 @@ import {
   TrendingUp, Users, Activity, ShieldAlert, ArrowUpRight,
   Navigation, Target, Cpu, CheckCircle2, XCircle, Clock
 } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, limit, addDoc, updateDoc, doc, serverTimestamp, deleteDoc, where } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, limit, addDoc, updateDoc, doc, serverTimestamp, deleteDoc, where, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import TacticalAssistant from '../../components/ai/TacticalAssistant';
@@ -134,6 +134,36 @@ export default function NGOAdminDashboard() {
     }
   };
 
+  const handleSeedVolunteers = async () => {
+    try {
+      const baseLat = 28.6139; // Delhi center
+      const baseLng = 77.2090;
+      for (let i = 1; i <= 10; i++) {
+        const uid = `demo-vol-${Date.now()}-${i}`;
+        await setDoc(doc(db, 'users', uid), {
+          uid,
+          role: 'VOLUNTEER',
+          approved: true,
+          online: true,
+          currentMissionId: null,
+          displayName: `Demo Volunteer ${i}`,
+          email: `demo${i}@seva.ai`,
+          location: {
+            lat: baseLat + (Math.random() - 0.5) * 0.05,
+            lng: baseLng + (Math.random() - 0.5) * 0.05
+          },
+          skills: ['Medical', 'Rescue'],
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      }
+      alert("10 Demo Volunteers Added Successfully!");
+    } catch(e) {
+      console.error(e);
+      alert("Failed to seed volunteers.");
+    }
+  };
+
   return (
     <div className="h-full font-sans text-gray-900 bg-gray-50 flex flex-col gap-6 p-0 md:p-0">
       {/* Header Area */}
@@ -148,6 +178,13 @@ export default function NGOAdminDashboard() {
         </div>
         
         <div className="flex items-center gap-4">
+          <button 
+            onClick={handleSeedVolunteers}
+            className="px-6 py-3 border border-gray-300 text-xs tracking-widest font-bold uppercase hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700 bg-white"
+          >
+            <Users size={16} />
+            Seed Volunteers
+          </button>
           <button 
             onClick={handleSwarmCycle}
             className="px-6 py-3 border border-gray-300 text-xs tracking-widest font-bold uppercase hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700 bg-white"
